@@ -1,20 +1,12 @@
 # encoding: utf-8
-
-from django.conf import settings
 from django.core.cache import cache
 
 import requests
 
+from .settings import Settings
 from .exceptions import DocumentNotFound
 
 class NTBObject(object):
-    # Note that when a secure endpoint for Turbasen is ready, we should generate a new API key as the current one
-    # will have been transmitted in cleartext.
-    # ENDPOINT_URL = u'https://api.nasjonalturbase.no/'
-    # ENDPOINT_URL = u'https://ntbprod-turistforeningen.dotcloud.com/'
-    ENDPOINT_URL = u'http://api.nasjonalturbase.no/'
-    TURBASE_LOOKUP_COUNT = 50
-
     def __init__(self, document, _is_partial=False):
         self.object_id = document['_id']
         self.tilbyder = document['tilbyder']
@@ -57,8 +49,8 @@ class NTBObject(object):
     @staticmethod
     def get_document(identifier, object_id):
         request = requests.get(
-            '%s%s/%s/' % (NTBObject.ENDPOINT_URL, identifier, object_id),
-            params={'api_key': settings.TURBASEN_API_KEY}
+            '%s%s/%s/' % (Settings.ENDPOINT_URL, identifier, object_id),
+            params={'api_key': Settings.API_KEY}
         )
         if request.status_code in [400, 404]:
             raise DocumentNotFound(
@@ -85,10 +77,10 @@ class NTBObject(object):
     @staticmethod
     def _lookup_recursively(identifier, skip, previous_results):
         response = requests.get(
-            '%s%s' % (NTBObject.ENDPOINT_URL, identifier),
+            '%s%s' % (Settings.ENDPOINT_URL, identifier),
             params={
-                'api_key': settings.TURBASEN_API_KEY,
-                'limit': NTBObject.TURBASE_LOOKUP_COUNT,
+                'api_key': Settings.TURBASEN_API_KEY,
+                'limit': Settings.LIMIT,
                 'skip': skip,
                 'status': u'Offentlig',  # Ignore Kladd, Privat, og Slettet
                 'tilbyder': u'DNT',      # Future proofing, there might be other objects
