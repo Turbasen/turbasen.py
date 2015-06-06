@@ -1,17 +1,18 @@
 from distutils.core import setup
 
+from turbasen import VERSION
+
 name = 'turbasen'
-version = '1.0.0'
 
 setup(
     name=name,
     packages=[name],
-    version=version,
+    version=VERSION,
     description='Client for Nasjonal Turbase REST API',
     author='Ali Kaafarani',
     author_email='ali.kaafarani@turistforeningen.no',
     url='https://github.com/Turbasen/turbasen.py',
-    download_url='https://github.com/Turbasen/turbasen.py/tarball/v%s' % (version),
+    download_url='https://github.com/Turbasen/turbasen.py/tarball/v%s' % (VERSION),
     keywords=['turbasen', 'nasjonalturbase', 'turistforening', 'rest-api'],
     classifiers=[
         'Development Status :: 4 - Beta',
