@@ -93,7 +93,11 @@ class NTBObject(object):
         if len(previous_results) == response['total']:
             return previous_results
         else:
-            return NTBObject._lookup_recursively(identifier, skip=(skip + response['count']), previous_results=previous_results)
+            return NTBObject._lookup_recursively(
+                identifier,
+                skip=(skip + response['count']),
+                previous_results=previous_results,
+            )
 
 class Omrade(NTBObject):
     identifier = u'områder'
