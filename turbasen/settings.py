@@ -1,3 +1,3 @@
 class Settings:
     ENDPOINT_URL = u'http://api.nasjonalturbase.no/'
-    LIMIT = 50
+    LIMIT = 20
