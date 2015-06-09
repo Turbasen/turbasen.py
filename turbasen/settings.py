@@ -7,3 +7,4 @@ class Settings:
     ENDPOINT_URL = 'http://api.nasjonalturbase.no/'
     LIMIT = 20
     CACHE = DummyCache()
+    API_KEY = None

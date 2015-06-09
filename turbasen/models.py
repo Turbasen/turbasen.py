@@ -48,10 +48,12 @@ class NTBObject(object):
 
     @staticmethod
     def get_document(identifier, object_id):
-        request = requests.get(
-            '%s%s/%s/' % (Settings.ENDPOINT_URL, identifier, object_id),
-            params={'api_key': Settings.API_KEY}
-        )
+        params = {}
+
+        if Settings.API_KEY is not None:
+            params['api_key'] = Settings.API_KEY
+
+        request = requests.get('%s%s/%s/' % (Settings.ENDPOINT_URL, identifier, object_id), params=params)
         if request.status_code in [400, 404]:
             raise DocumentNotFound(
                 "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (identifier, object_id)
@@ -76,16 +78,17 @@ class NTBObject(object):
 
     @staticmethod
     def _lookup_recursively(identifier, skip, previous_results):
-        response = requests.get(
-            '%s%s' % (Settings.ENDPOINT_URL, identifier),
-            params={
-                'api_key': Settings.TURBASEN_API_KEY,
-                'limit': Settings.LIMIT,
-                'skip': skip,
-                'status': u'Offentlig',  # Ignore Kladd, Privat, og Slettet
-                'tilbyder': u'DNT',      # Future proofing, there might be other objects
-            }
-        ).json()
+        params = {
+            'limit': Settings.LIMIT,
+            'skip': skip,
+            'status': u'Offentlig',  # Ignore Kladd, Privat, og Slettet
+            'tilbyder': u'DNT',      # Future proofing, there might be other objects
+        }
+
+        if Settings.API_KEY is not None:
+            params['api_key'] = Settings.API_KEY
+
+        response = requests.get('%s%s' % (Settings.ENDPOINT_URL, identifier), params=params).json()
 
         for document in response['documents']:
             previous_results.append(document)
