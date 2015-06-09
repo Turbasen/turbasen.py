@@ -1,9 +1,8 @@
 from setuptools import setup
 from os import path
 
-from turbasen import VERSION
-
 name = 'turbasen'
+VERSION = '1.0.1'
 
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
