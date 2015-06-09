@@ -11,4 +11,4 @@ from .models import \
 def configure(**settings):
     from .settings import Settings
     for key, value in settings.items():
-        Settings.setattr(key, value)
+        setattr(Settings, key, value)
