@@ -71,12 +71,12 @@ class NTBObject(object):
     def lookup(cls, pages=1):
         """Retrieve a complete list of these objects, partially fetched. Specify how many pages you want retrieved
         (result count in a page is configured with LIMIT), or set to None to retrieve all documents."""
-        return NTBObject.NTBIterator(cls.identifier, pages)
+        return NTBObject.NTBIterator(cls, pages)
 
     class NTBIterator:
         """Document iterator"""
-        def __init__(self, identifier, pages):
-            self.identifier = identifier
+        def __init__(self, cls, pages):
+            self.cls = cls
             self.pages = pages
 
         def __iter__(self):
@@ -94,7 +94,8 @@ class NTBObject(object):
                     self.lookup_bulk()
 
             self.document_index += 1
-            return self.document_list[self.document_index - 1]
+            document = self.document_list[self.document_index - 1]
+            return self.cls(document, _is_partial=True)
 
         def lookup_bulk(self):
             params = {
@@ -107,7 +108,7 @@ class NTBObject(object):
             if Settings.API_KEY is not None:
                 params['api_key'] = Settings.API_KEY
 
-            request = requests.get('%s%s' % (Settings.ENDPOINT_URL, self.identifier), params=params)
+            request = requests.get('%s%s' % (Settings.ENDPOINT_URL, self.cls.identifier), params=params)
             if request.status_code in [401, 403]:
                 raise Unauthorized(
                     "Turbasen returned status code %s with the message: \"%s\"" % (
