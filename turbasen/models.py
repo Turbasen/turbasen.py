@@ -135,7 +135,7 @@ class Omrade(NTBObject):
         self.navn = document.get('navn')
 
     def __repr__(self):
-        return ('Område: %s (%s)' % (self.object_id, self.navn)).encode('utf-8')
+        return 'Område: %s (%s)' % (self.object_id, self.navn)
 
 class Sted(NTBObject):
     identifier = 'steder'
@@ -171,4 +171,4 @@ class Sted(NTBObject):
         self.navn = document.get('navn')
 
     def __repr__(self):
-        return ('Sted: %s (%s)' % (self.object_id, self.navn)).encode('utf-8')
+        return 'Sted: %s (%s)' % (self.object_id, self.navn)
