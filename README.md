@@ -7,10 +7,10 @@ Call `turbasen.configure` to change settings. For example:
 
 ```python
     import turbasen
-    turbasen.configure({
-      'LIMIT': 50,
-      'CACHE': my_cache,
-    })
+    turbasen.configure(
+      LIMIT=50,
+      CACHE=my_cache,
+    )
 ```
 
 [The available settings](https://github.com/Turbasen/turbasen.py/blob/master/turbasen/settings.py) are:
