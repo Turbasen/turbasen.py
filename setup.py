@@ -1,14 +1,20 @@
 from distutils.core import setup
+from os import path
 
 from turbasen import VERSION
 
 name = 'turbasen'
+
+here = path.abspath(path.dirname(__file__))
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name=name,
     packages=[name],
     version=VERSION,
     description='Client for Nasjonal Turbase REST API',
+    long_description=long_description,
     author='Ali Kaafarani',
     author_email='ali.kaafarani@turistforeningen.no',
     url='https://github.com/Turbasen/turbasen.py',
