@@ -72,50 +72,59 @@ class NTBObject(object):
         """Retrieve a complete list of these objects, partially fetched"""
         objects = Settings.CACHE.get('turbasen.%s.lookup' % cls.__name__)
         if objects is None:
-            objects = [
-                cls(document, _is_partial=True)
-                for document in NTBObject._lookup_recursively(cls.identifier, skip=0, previous_results=[])
-            ]
+            objects = NTBObject.NTBIterator(cls.identifier)
             Settings.CACHE.set('turbasen.%s.lookup' % cls.__name__, objects, cls.LOOKUP_CACHE_PERIOD)
         return objects
 
-    #
-    # Private static methods
-    #
+    class NTBIterator:
+        """Document iterator"""
+        def __init__(self, identifier):
+            self.identifier = identifier
 
-    @staticmethod
-    def _lookup_recursively(identifier, skip, previous_results):
-        params = {
-            'limit': Settings.LIMIT,
-            'skip': skip,
-            'status': 'Offentlig',  # Ignore Kladd, Privat, og Slettet
-            'tilbyder': 'DNT',      # Future proofing, there might be other objects
-        }
+        def __iter__(self):
+            self.bulk_index = 0
+            self.document_index = 0
+            self.document_list = []
+            self.exhausted = False
+            return self
 
-        if Settings.API_KEY is not None:
-            params['api_key'] = Settings.API_KEY
+        def __next__(self):
+            if self.document_index >= len(self.document_list):
+                if self.exhausted:
+                    raise StopIteration
+                else:
+                    self.lookup_bulk()
 
-        request = requests.get('%s%s' % (Settings.ENDPOINT_URL, identifier), params=params)
-        if request.status_code in [401, 403]:
-            raise Unauthorized(
-                "Turbasen returned status code %s with the message: \"%s\"" % (
-                    request.status_code,
-                    request.json()['message'],
+            self.document_index += 1
+            return self.document_list[self.document_index - 1]
+
+        def lookup_bulk(self):
+            params = {
+                'limit': Settings.LIMIT,
+                'skip': self.bulk_index,
+                'status': 'Offentlig',  # Ignore Kladd, Privat, og Slettet
+                'tilbyder': 'DNT',      # Future proofing, there might be other objects
+            }
+
+            if Settings.API_KEY is not None:
+                params['api_key'] = Settings.API_KEY
+
+            request = requests.get('%s%s' % (Settings.ENDPOINT_URL, self.identifier), params=params)
+            if request.status_code in [401, 403]:
+                raise Unauthorized(
+                    "Turbasen returned status code %s with the message: \"%s\"" % (
+                        request.status_code,
+                        request.json()['message'],
+                    )
                 )
-            )
 
-        response = request.json()
-        for document in response['documents']:
-            previous_results.append(document)
+            response = request.json()
+            self.document_list = response['documents']
+            self.document_index = 0
+            self.bulk_index += len(self.document_list)
 
-        if len(previous_results) == response['total']:
-            return previous_results
-        else:
-            return NTBObject._lookup_recursively(
-                identifier,
-                skip=(skip + response['count']),
-                previous_results=previous_results,
-            )
+            if self.bulk_index == response['total']:
+                self.exhausted = True
 
 class Omrade(NTBObject):
     identifier = 'områder'
