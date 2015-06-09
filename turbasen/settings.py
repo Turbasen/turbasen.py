@@ -1,6 +1,9 @@
+# encoding: utf-8
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from .cache import DummyCache
 
 class Settings:
-    ENDPOINT_URL = u'http://api.nasjonalturbase.no/'
+    ENDPOINT_URL = 'http://api.nasjonalturbase.no/'
     LIMIT = 20
     CACHE = DummyCache()
