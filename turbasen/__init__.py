@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 VERSION = '1.0.0'
 
+# Import the models we want directly available through the 'turbasen' module
 from .models import \
     Omrade, \
     Sted
