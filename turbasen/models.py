@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import requests
 
 from .settings import Settings
-from .exceptions import DocumentNotFound
+from .exceptions import DocumentNotFound, Unauthorized
 
 class NTBObject(object):
     def __init__(self, document, _is_partial=False):
@@ -58,6 +58,13 @@ class NTBObject(object):
             raise DocumentNotFound(
                 "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (identifier, object_id)
             )
+        elif request.status_code in [401, 403]:
+            raise Unauthorized(
+                "Turbasen returned status code %s with the message: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
+                )
+            )
         return request.json()
 
     @classmethod
@@ -88,8 +95,16 @@ class NTBObject(object):
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
 
-        response = requests.get('%s%s' % (Settings.ENDPOINT_URL, identifier), params=params).json()
+        request = requests.get('%s%s' % (Settings.ENDPOINT_URL, identifier), params=params)
+        if request.status_code in [401, 403]:
+            raise Unauthorized(
+                "Turbasen returned status code %s with the message: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
+                )
+            )
 
+        response = request.json()
         for document in response['documents']:
             previous_results.append(document)
 
