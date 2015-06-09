@@ -70,11 +70,7 @@ class NTBObject(object):
     @classmethod
     def lookup(cls):
         """Retrieve a complete list of these objects, partially fetched"""
-        objects = Settings.CACHE.get('turbasen.%s.lookup' % cls.__name__)
-        if objects is None:
-            objects = NTBObject.NTBIterator(cls.identifier)
-            Settings.CACHE.set('turbasen.%s.lookup' % cls.__name__, objects, cls.LOOKUP_CACHE_PERIOD)
-        return objects
+        return NTBObject.NTBIterator(cls.identifier)
 
     class NTBIterator:
         """Document iterator"""
