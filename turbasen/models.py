@@ -1,6 +1,4 @@
 # encoding: utf-8
-from django.core.cache import cache
-
 import requests
 
 from .settings import Settings
@@ -61,13 +59,13 @@ class NTBObject(object):
     @classmethod
     def lookup(cls):
         """Retrieve a complete list of these objects, partially fetched"""
-        objects = cache.get('turbasen.%s.lookup' % cls.__name__)
+        objects = Settings.CACHE.get('turbasen.%s.lookup' % cls.__name__)
         if objects is None:
             objects = [
                 cls(document, _is_partial=True)
                 for document in NTBObject._lookup_recursively(cls.identifier, skip=0, previous_results=[])
             ]
-            cache.set('turbasen.%s.lookup' % cls.__name__, objects, cls.LOOKUP_CACHE_PERIOD)
+            Settings.CACHE.set('turbasen.%s.lookup' % cls.__name__, objects, cls.LOOKUP_CACHE_PERIOD)
         return objects
 
     #
