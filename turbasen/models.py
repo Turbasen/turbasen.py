@@ -68,14 +68,16 @@ class NTBObject(object):
         return request.json()
 
     @classmethod
-    def lookup(cls):
-        """Retrieve a complete list of these objects, partially fetched"""
-        return NTBObject.NTBIterator(cls.identifier)
+    def lookup(cls, pages=1):
+        """Retrieve a complete list of these objects, partially fetched. Specify how many pages you want retrieved
+        (result count in a page is configured with LIMIT), or set to None to retrieve all documents."""
+        return NTBObject.NTBIterator(cls.identifier, pages)
 
     class NTBIterator:
         """Document iterator"""
-        def __init__(self, identifier):
+        def __init__(self, identifier, pages):
             self.identifier = identifier
+            self.pages = pages
 
         def __iter__(self):
             self.bulk_index = 0
@@ -120,6 +122,10 @@ class NTBObject(object):
             self.bulk_index += len(self.document_list)
 
             if self.bulk_index == response['total']:
+                # All documents retrieved
+                self.exhausted = True
+            elif self.pages is not None and self.bulk_index >= self.pages * Settings.LIMIT:
+                # Specified page limit reached
                 self.exhausted = True
 
 class Omrade(NTBObject):
