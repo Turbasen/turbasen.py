@@ -115,7 +115,15 @@ class NTBObject(object):
     def lookup(cls, pages=1):
         """Retrieve a complete list of these objects, partially fetched. Specify how many pages you want retrieved
         (result count in a page is configured with LIMIT), or set to None to retrieve all documents."""
-        return list(NTBObject.NTBIterator(cls, pages))
+        objects = Settings.CACHE.get('turbasen.objects.%s.%s' % (cls.identifier, pages))
+        if objects is None:
+            objects = list(NTBObject.NTBIterator(cls, pages))
+            Settings.CACHE.set(
+                'turbasen.objects.%s.%s' % (cls.identifier, pages),
+                objects,
+                Settings.CACHE_LOOKUP_PERIOD,
+            )
+        return objects
 
     class NTBIterator:
         """Document iterator"""
