@@ -180,7 +180,6 @@ class NTBObject(object):
 
 class Omrade(NTBObject):
     identifier = 'områder'
-    LOOKUP_CACHE_PERIOD = 60 * 60 * 24
     FIELDS = [
         'navngiving',
         'status',
@@ -202,7 +201,6 @@ class Omrade(NTBObject):
 
 class Sted(NTBObject):
     identifier = 'steder'
-    LOOKUP_CACHE_PERIOD = 60 * 60 * 24
     FIELDS = [
         'navngiving',
         'status',
