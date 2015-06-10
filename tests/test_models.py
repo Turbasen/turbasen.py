@@ -16,6 +16,13 @@ def test_get(configure_dev):
     assert sted.ssr_id == 382116
 
 @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
+def test_refresh(configure_dev):
+    sted = turbasen.Sted.get('52407fb375049e561500004e')
+    etag = sted._etag
+    sted.refresh()
+    assert etag == sted._etag
+
+@pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
 def test_lookup(configure_dev):
     results = turbasen.Sted.lookup(pages=2)
     result_list = list(results)
