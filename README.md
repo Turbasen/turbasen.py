@@ -55,3 +55,19 @@ turbasen.configure(
 * `ETAG_CACHE_PERIOD`: Number of seconds to wait before verifying an object's ETag upon a `get` call and potentially refetch its document.
 
 [See the source file for default values](https://github.com/Turbasen/turbasen.py/blob/master/turbasen/settings.py).
+
+## Events
+
+The client is able to trigger event handlers on a few occasions.
+
+```python
+import turbasen
+
+def my_handler():
+    pass
+
+turbasen.handle_event('api.get_object', my_handler)
+```
+
+* `api.get_object`: Triggered whenever a GET request is made to retrieve a single object the REST API.
+* `api.get_objects`: Triggered whenever a GET request is made to retrieve a list of objects from the REST API.
