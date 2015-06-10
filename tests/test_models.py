@@ -9,6 +9,10 @@ import turbasen
 def configure_dev():
     turbasen.configure(ENDPOINT_URL='http://dev.nasjonalturbase.no/')
 
+@pytest.fixture
+def no_etag_cache():
+    turbasen.configure(ETAG_CACHE_PERIOD=0)
+
 @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
 def test_get(configure_dev):
     sted = turbasen.Sted.get('52407fb375049e561500004e')
@@ -16,7 +20,7 @@ def test_get(configure_dev):
     assert sted.ssr_id == 382116
 
 @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
-def test_refresh(configure_dev):
+def test_refresh(configure_dev, no_etag_cache):
     sted = turbasen.Sted.get('52407fb375049e561500004e')
     etag = sted._etag
     sted.refresh()
