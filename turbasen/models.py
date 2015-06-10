@@ -38,10 +38,7 @@ class NTBObject(object):
     def fetch(self):
         """Retrieve this object's entire document"""
         headers, document = NTBObject.get_document(self.identifier, self.object_id)
-        self._etag = headers['etag']
-        for field in self.FIELDS:
-            variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
-            setattr(self, variable_name, document.get(field))
+        self.set_document(headers, document)
 
     def refresh(self):
         """Check if the object is modified, and if so, reset its data"""
@@ -51,10 +48,13 @@ class NTBObject(object):
             return
         else:
             headers, document = result
-            self._etag = headers['etag']
-            for field in self.FIELDS:
-                variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
-                setattr(self, variable_name, document.get(field))
+            self.set_document(headers, document)
+
+    def set_document(self, headers, document):
+        self._etag = headers['etag']
+        for field in self.FIELDS:
+            variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
+            setattr(self, variable_name, document.get(field))
 
     #
     # Lookup static methods
