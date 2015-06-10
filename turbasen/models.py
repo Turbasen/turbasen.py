@@ -55,6 +55,7 @@ class NTBObject(object):
         for field in self.FIELDS:
             variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
             setattr(self, variable_name, document.get(field))
+        Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_PERIOD)
 
     #
     # Lookup static methods
@@ -63,8 +64,13 @@ class NTBObject(object):
     @classmethod
     def get(cls, object_id):
         """Retrieve a single object from NTB by its object id"""
-        headers, document = NTBObject.get_document(cls.identifier, object_id)
-        return cls(headers['etag'], document, _is_partial=True)
+        object = Settings.CACHE.get('turbasen.object.%s' % object_id)
+        if object is None:
+            headers, document = NTBObject.get_document(cls.identifier, object_id)
+            return cls(headers['etag'], document, _is_partial=True)
+        else:
+            object.refresh()
+            return object
 
     @staticmethod
     def get_document(identifier, object_id, etag=None):
