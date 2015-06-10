@@ -86,6 +86,10 @@ class NTBObject(object):
             self.exhausted = False
             return self
 
+        def next(self):
+            """For python2 compatibility"""
+            return self.__next__()
+
         def __next__(self):
             if self.document_index >= len(self.document_list):
                 if self.exhausted:
