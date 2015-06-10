@@ -1,7 +1,7 @@
 # encoding: utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import sys
 
 import requests
@@ -44,6 +44,9 @@ class NTBObject(object):
 
     def refresh(self):
         """Check if the object is modified, and if so, reset its data"""
+        if self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
+            return
+
         result = NTBObject.get_document(self.identifier, self.object_id, self._etag)
         if result is None:
             # Document is not modified
