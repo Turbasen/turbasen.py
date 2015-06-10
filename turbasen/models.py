@@ -1,6 +1,7 @@
 # encoding: utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from datetime import datetime
 import sys
 
 import requests
@@ -11,6 +12,7 @@ from .exceptions import DocumentNotFound, Unauthorized
 class NTBObject(object):
     def __init__(self, etag, document, _is_partial=False):
         self._etag = etag
+        self._saved = datetime.now()
 
         self.object_id = document['_id']
         self.tilbyder = document['tilbyder']
@@ -52,6 +54,7 @@ class NTBObject(object):
 
     def set_document(self, headers, document):
         self._etag = headers['etag']
+        self._saved = datetime.now()
         for field in self.FIELDS:
             variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
             setattr(self, variable_name, document.get(field))
