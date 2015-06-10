@@ -9,7 +9,9 @@ from .settings import Settings
 from .exceptions import DocumentNotFound, Unauthorized
 
 class NTBObject(object):
-    def __init__(self, document, _is_partial=False):
+    def __init__(self, etag, document, _is_partial=False):
+        self._etag = etag
+
         self.object_id = document['_id']
         self.tilbyder = document['tilbyder']
         self.endret = document['endret']
@@ -36,6 +38,7 @@ class NTBObject(object):
     def fetch(self):
         """Retrieve this object's entire document"""
         headers, document = NTBObject.get_document(self.identifier, self.object_id)
+        self._etag = headers['etag']
         for field in self.FIELDS:
             variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
             setattr(self, variable_name, document.get(field))
@@ -48,7 +51,7 @@ class NTBObject(object):
     def get(cls, object_id):
         """Retrieve a single object from NTB by its object id"""
         headers, document = NTBObject.get_document(cls.identifier, object_id)
-        return cls(document, _is_partial=True)
+        return cls(headers['etag'], document, _is_partial=True)
 
     @staticmethod
     def get_document(identifier, object_id):
@@ -103,7 +106,7 @@ class NTBObject(object):
 
             self.document_index += 1
             document = self.document_list[self.document_index - 1]
-            return self.cls(document, _is_partial=True)
+            return self.cls(document['checksum'], document, _is_partial=True)
 
         def lookup_bulk(self):
             params = {
@@ -111,6 +114,7 @@ class NTBObject(object):
                 'skip': self.bulk_index,
                 'status': 'Offentlig',  # Ignore Kladd, Privat, og Slettet
                 'tilbyder': 'DNT',      # Future proofing, there might be other objects
+                'fields': ','.join(['navn', 'checksum', 'endret', 'status']), # Include checksum (etag)
             }
 
             if Settings.API_KEY is not None:
