@@ -1,15 +1,13 @@
 # encoding: utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-# Import the models we want directly available through the 'turbasen' module
+# Import the models we want directly available through the root module
 from .models import \
     Omrade, \
     Sted
 
-# Make handle_available directly available through the 'turbasen' module
-from .events import handle_event
+# Make configure directly available through the root module
+from .settings import configure
 
-def configure(**settings):
-    from .settings import Settings
-    for key, value in settings.items():
-        setattr(Settings, key, value)
+# Make handle_available directly available through the root module
+from .events import handle_event

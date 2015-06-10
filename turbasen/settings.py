@@ -13,3 +13,7 @@ class Settings:
     CACHE_GET_PERIOD = 60 * 60 * 24 * 30
     ETAG_CACHE_PERIOD = 60 * 60
     API_KEY = os.environ.get('TURBASEN_API_KEY')
+
+def configure(**settings):
+    for key, value in settings.items():
+        setattr(Settings, key, value)
