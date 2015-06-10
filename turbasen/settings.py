@@ -9,4 +9,5 @@ class Settings:
     ENDPOINT_URL = 'http://api.nasjonalturbase.no/'
     LIMIT = 20
     CACHE = DummyCache()
+    CACHE_PERIOD = 60 * 60 * 24 * 7
     API_KEY = os.environ.get('TURBASEN_API_KEY')
