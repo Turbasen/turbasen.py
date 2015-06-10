@@ -17,6 +17,9 @@ class NTBObject(object):
         self.status = document['status']
         self._is_partial = _is_partial
 
+        # The 'navn' field may or may not be defined
+        self.navn = document.get('navn')
+
     def __getattr__(self, name):
         """On attribute lookup failure, if the object is only partially retrieved, get the rest of its data and try
         again"""
@@ -146,10 +149,6 @@ class Omrade(NTBObject):
         'bilder',
     ]
 
-    def __init__(self, document, *args, **kwargs):
-        super(Omrade, self).__init__(document, *args, **kwargs)
-        self.navn = document.get('navn')
-
     def __repr__(self):
         repr = '<Område: %s (%s)>' % (self.object_id, self.navn)
         # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
@@ -187,10 +186,6 @@ class Sted(NTBObject):
         'kart',
         'turkart',
     ]
-
-    def __init__(self, document, *args, **kwargs):
-        super(Sted, self).__init__(document, *args, **kwargs)
-        self.navn = document.get('navn')
 
     def __repr__(self):
         repr = '<Sted: %s (%s)>' % (self.object_id, self.navn)
