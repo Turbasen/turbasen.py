@@ -9,7 +9,7 @@ def configure_dev():
 @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
 def test_get(configure_dev):
     sted = turbasen.Sted.get('52407fb375049e561500004e')
-    assert sted.navn == 'Tjørnbrotbu'
+    assert sted.navn == u'Tjørnbrotbu'
     assert sted.ssr_id == 382116
 
 @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
