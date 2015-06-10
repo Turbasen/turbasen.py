@@ -35,7 +35,7 @@ class NTBObject(object):
 
     def fetch(self):
         """Retrieve this object's entire document"""
-        document = NTBObject.get_document(self.identifier, self.object_id)
+        headers, document = NTBObject.get_document(self.identifier, self.object_id)
         for field in self.FIELDS:
             variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
             setattr(self, variable_name, document.get(field))
@@ -47,7 +47,8 @@ class NTBObject(object):
     @classmethod
     def get(cls, object_id):
         """Retrieve a single object from NTB by its object id"""
-        return cls(NTBObject.get_document(cls.identifier, object_id), _is_partial=True)
+        headers, document = NTBObject.get_document(cls.identifier, object_id)
+        return cls(document, _is_partial=True)
 
     @staticmethod
     def get_document(identifier, object_id):
@@ -68,7 +69,7 @@ class NTBObject(object):
                     request.json()['message'],
                 )
             )
-        return request.json()
+        return request.headers, request.json()
 
     @classmethod
     def lookup(cls, pages=1):
