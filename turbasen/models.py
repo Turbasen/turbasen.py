@@ -153,7 +153,7 @@ class Omrade(NTBObject):
         self.navn = document.get('navn')
 
     def __repr__(self):
-        repr = 'Område: %s (%s)' % (self.object_id, self.navn)
+        repr = '<Område: %s (%s)>' % (self.object_id, self.navn)
         # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
         # explicit checks grow out of hand, consider replacing them with six.
         if sys.version_info.major == 2:
@@ -195,7 +195,7 @@ class Sted(NTBObject):
         self.navn = document.get('navn')
 
     def __repr__(self):
-        repr = 'Sted: %s (%s)' % (self.object_id, self.navn)
+        repr = '<Sted: %s (%s)>' % (self.object_id, self.navn)
         # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
         # explicit checks grow out of hand, consider replacing them with six.
         if sys.version_info.major == 2:
