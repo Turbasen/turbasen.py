@@ -61,7 +61,7 @@ class NTBObject(object):
         for field in self.FIELDS:
             variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
             setattr(self, variable_name, document.get(field))
-        Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_PERIOD)
+        Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
 
     #
     # Lookup static methods
