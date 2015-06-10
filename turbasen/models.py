@@ -1,6 +1,8 @@
 # encoding: utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import sys
+
 import requests
 
 from .settings import Settings
@@ -151,7 +153,13 @@ class Omrade(NTBObject):
         self.navn = document.get('navn')
 
     def __repr__(self):
-        return 'Område: %s (%s)' % (self.object_id, self.navn)
+        repr = 'Område: %s (%s)' % (self.object_id, self.navn)
+        # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
+        # explicit checks grow out of hand, consider replacing them with six.
+        if sys.version_info.major == 2:
+            return repr.encode('utf-8')
+        else:
+            return repr
 
 class Sted(NTBObject):
     identifier = 'steder'
@@ -187,4 +195,10 @@ class Sted(NTBObject):
         self.navn = document.get('navn')
 
     def __repr__(self):
-        return 'Sted: %s (%s)' % (self.object_id, self.navn)
+        repr = 'Sted: %s (%s)' % (self.object_id, self.navn)
+        # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
+        # explicit checks grow out of hand, consider replacing them with six.
+        if sys.version_info.major == 2:
+            return repr.encode('utf-8')
+        else:
+            return repr
