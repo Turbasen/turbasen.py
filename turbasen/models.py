@@ -54,13 +54,22 @@ class NTBObject(object):
         return cls(headers['etag'], document, _is_partial=True)
 
     @staticmethod
-    def get_document(identifier, object_id):
+    def get_document(identifier, object_id, etag=None):
         params = {}
 
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
 
-        request = requests.get('%s%s/%s/' % (Settings.ENDPOINT_URL, identifier, object_id), params=params)
+        headers = {}
+
+        if etag is not None:
+            headers['if-none-match'] = etag
+
+        request = requests.get(
+            '%s%s/%s/' % (Settings.ENDPOINT_URL, identifier, object_id),
+            headers=headers,
+            params=params,
+        )
         if request.status_code in [400, 404]:
             raise DocumentNotFound(
                 "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (identifier, object_id)
@@ -72,6 +81,9 @@ class NTBObject(object):
                     request.json()['message'],
                 )
             )
+        elif request.status_code == 304 and etag is not None:
+            return None
+
         return request.headers, request.json()
 
     @classmethod
