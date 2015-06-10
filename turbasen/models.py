@@ -8,6 +8,7 @@ import requests
 
 from .settings import Settings
 from .exceptions import DocumentNotFound, Unauthorized
+from . import events
 
 class NTBObject(object):
     def __init__(self, etag, document, _is_partial=False):
@@ -90,6 +91,7 @@ class NTBObject(object):
         if etag is not None:
             headers['if-none-match'] = etag
 
+        events.trigger('api.get_object')
         request = requests.get(
             '%s%s/%s/' % (Settings.ENDPOINT_URL, identifier, object_id),
             headers=headers,
@@ -165,6 +167,7 @@ class NTBObject(object):
             if Settings.API_KEY is not None:
                 params['api_key'] = Settings.API_KEY
 
+            events.trigger('api.get_objects')
             request = requests.get('%s%s' % (Settings.ENDPOINT_URL, self.cls.identifier), params=params)
             if request.status_code in [401, 403]:
                 raise Unauthorized(
