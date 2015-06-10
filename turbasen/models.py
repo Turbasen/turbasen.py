@@ -24,20 +24,18 @@ class NTBObject(object):
             # Note that we're ignoring internal non-existing attributes, which can occur in various situations, e.g.
             # when serializing for caching.
             self.fetch()
+            self._is_partial = False
             return getattr(self, name)
         else:
             # Default behavior - no such attribute
             raise AttributeError
 
     def fetch(self):
-        """If this object is only partially fetched, this method will retrieve the rest of its fields"""
-        if not self._is_partial:
-            return
+        """Retrieve this object's entire document"""
         document = NTBObject.get_document(self.identifier, self.object_id)
         for field in self.FIELDS:
             variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
             setattr(self, variable_name, document.get(field))
-        self._is_partial = False
 
     #
     # Lookup static methods
