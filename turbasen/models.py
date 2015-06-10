@@ -115,7 +115,7 @@ class NTBObject(object):
     def lookup(cls, pages=1):
         """Retrieve a complete list of these objects, partially fetched. Specify how many pages you want retrieved
         (result count in a page is configured with LIMIT), or set to None to retrieve all documents."""
-        return NTBObject.NTBIterator(cls, pages)
+        return list(NTBObject.NTBIterator(cls, pages))
 
     class NTBIterator:
         """Document iterator"""
