@@ -50,6 +50,7 @@ turbasen.configure(
 * `LIMIT`: Results per page when fetching multiple objects. Currently allows up to 50; [see the docs](http://www.nasjonalturbase.no/) for updates.
 * `CACHE`: If specified, the library will itself perform what it deems to be reasonable caching of lookups and objects. Expects a cache engine implementing a small subset of [the Django cache API](https://docs.djangoproject.com/en/dev/topics/cache/#the-low-level-cache-api), specifically its `get` and `set` methods.
 * `API_KEY`: Currently an API key is required for access, however there are plans to drop the key requirement. [See the website](http://www.nasjonalturbase.no/) for updates. The API key can also be specified as an exported environment variable called `TURBASEN_API_KEY`.
-* `CACHE_PERIOD`: Number of seconds to retain cache data.
+* `CACHE_PERIOD`: Number of seconds to retain cache data. This can be set very high, since cached objects' ETag will be checked regardless based on the `ETAG_CACHE_PERIOD` settings.
+* `ETAG_CACHE_PERIOD`: Number of seconds to wait before verifying an object's ETag upon a `get` call and potentially refetch its document.
 
 [See the source file for default values](https://github.com/Turbasen/turbasen.py/blob/master/turbasen/settings.py).
