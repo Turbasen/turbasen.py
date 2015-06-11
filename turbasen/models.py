@@ -82,12 +82,10 @@ class NTBObject(object):
     @staticmethod
     def get_document(identifier, object_id, etag=None):
         params = {}
-
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
 
         headers = {}
-
         if etag is not None:
             headers['if-none-match'] = etag
 
