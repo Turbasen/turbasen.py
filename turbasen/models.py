@@ -74,7 +74,9 @@ class NTBObject(object):
         object = Settings.CACHE.get('turbasen.object.%s' % object_id)
         if object is None:
             headers, document = NTBObject.get_document(cls.identifier, object_id)
-            return cls(headers['etag'], document)
+            object = cls(headers['etag'], document)
+            object.set_document(headers, document)
+            return object
         else:
             object.refresh()
             return object
