@@ -62,8 +62,9 @@ class NTBObject(object):
         logger.debug("[refresh %s]: ETag cache period expired, performing request..." % self.object_id)
         result = NTBObject.get_document(self.identifier, self.object_id, self._etag)
         if result is None:
-            # Document is not modified
+            # Document is not modified, reset the etag check timeout
             logger.debug("[refresh %s]: Document was not modified" % self.object_id)
+            self._saved = datetime.now()
             return
         else:
             logger.debug("[refresh %s]: Document was modified, resetting fields..." % self.object_id)
