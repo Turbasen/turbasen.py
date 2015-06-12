@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from datetime import datetime, timedelta
+import logging
 import sys
 
 import requests
@@ -9,6 +10,8 @@ import requests
 from .settings import Settings
 from .exceptions import DocumentNotFound, Unauthorized
 from . import events
+
+logger = logging.getLogger('turbasen')
 
 class NTBObject(object):
     def __init__(self, etag, document, _is_partial=False):
@@ -31,6 +34,10 @@ class NTBObject(object):
         if not name.startswith('_') and self._is_partial:
             # Note that we're ignoring internal non-existing attributes, which can occur in various situations, e.g.
             # when serializing for caching.
+            logger.debug("[getattr %s.%s]: Accessed non-existing attribute on partial object; fetching document..." % (
+                self.object_id,
+                name,
+            ))
             self.fetch()
             self._is_partial = False
             return getattr(self, name)
@@ -46,13 +53,20 @@ class NTBObject(object):
     def refresh(self):
         """Check if the object is modified, and if so, reset its data"""
         if self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
+            logger.debug("[refresh %s]: Object is younger than ETag cache period (%s), skipping ETag check" % (
+                self.object_id,
+                Settings.ETAG_CACHE_PERIOD,
+            ))
             return
 
+        logger.debug("[refresh %s]: ETag cache period expired, performing request..." % self.object_id)
         result = NTBObject.get_document(self.identifier, self.object_id, self._etag)
         if result is None:
             # Document is not modified
+            logger.debug("[refresh %s]: Document was not modified" % self.object_id)
             return
         else:
+            logger.debug("[refresh %s]: Document was modified, resetting fields..." % self.object_id)
             headers, document = result
             self.set_document(headers, document)
 
@@ -63,6 +77,7 @@ class NTBObject(object):
             variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
             setattr(self, variable_name, document.get(field))
         Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
+        logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self.object_id, self._etag))
 
     #
     # Lookup static methods
@@ -73,11 +88,13 @@ class NTBObject(object):
         """Retrieve a single object from NTB by its object id"""
         object = Settings.CACHE.get('turbasen.object.%s' % object_id)
         if object is None:
+            logger.debug("[get %s/%s]: Not in local cache, performing GET request..." % (cls.identifier, object_id))
             headers, document = NTBObject.get_document(cls.identifier, object_id)
             object = cls(headers['etag'], document)
             object.set_document(headers, document)
             return object
         else:
+            logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (cls.identifier, object_id))
             object.refresh()
             return object
 
@@ -119,12 +136,15 @@ class NTBObject(object):
         (result count in a page is configured with LIMIT), or set to None to retrieve all documents."""
         objects = Settings.CACHE.get('turbasen.objects.%s.%s' % (cls.identifier, pages))
         if objects is None:
+            logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (cls.identifier, pages))
             objects = list(NTBObject.NTBIterator(cls, pages))
             Settings.CACHE.set(
                 'turbasen.objects.%s.%s' % (cls.identifier, pages),
                 objects,
                 Settings.CACHE_LOOKUP_PERIOD,
             )
+        else:
+            logger.debug("[lookup %s (pages=%s)]: Retrieved from cache" % (cls.identifier, pages))
         return objects
 
     class NTBIterator:
