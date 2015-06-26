@@ -25,6 +25,11 @@ def test_get_gruppe(configure_dev):
     assert gruppe.navn == 'Alta og omegn turlag'
 
 @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
+def test_get_omrade(configure_dev):
+    omrade = turbasen.Omrade.get('52408144e7926dcf15000004')
+    assert omrade.navn == 'Sørlandet'
+
+@pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
 def test_refresh(configure_dev, no_etag_cache):
     sted = turbasen.Sted.get('52407fb375049e561500004e')
     etag = sted._etag
