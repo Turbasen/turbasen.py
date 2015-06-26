@@ -52,7 +52,7 @@ class NTBObject(object):
 
     def refresh(self):
         """Check if the object is modified, and if so, reset its data"""
-        if self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
+        if self._etag is not None and self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
             logger.debug("[refresh %s]: Object is younger than ETag cache period (%s), skipping ETag check" % (
                 self.object_id,
                 Settings.ETAG_CACHE_PERIOD,
