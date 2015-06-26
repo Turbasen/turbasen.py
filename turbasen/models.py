@@ -14,7 +14,7 @@ from . import events
 logger = logging.getLogger('turbasen')
 
 class NTBObject(object):
-    def __init__(self, etag, document, _is_partial=False):
+    def __init__(self, document, etag=None, _is_partial=False):
         self._etag = etag
         self._saved = datetime.now()
 
@@ -92,7 +92,7 @@ class NTBObject(object):
         if object is None:
             logger.debug("[get %s/%s]: Not in local cache, performing GET request..." % (cls.identifier, object_id))
             headers, document = NTBObject.get_document(cls.identifier, object_id)
-            object = cls(headers['etag'], document)
+            object = cls(document, etag=headers['etag'])
             object.set_document(headers, document)
             return object
         else:
@@ -175,7 +175,7 @@ class NTBObject(object):
 
             self.document_index += 1
             document = self.document_list[self.document_index - 1]
-            return self.cls(document['checksum'], document, _is_partial=True)
+            return self.cls(document, etag=document['checksum'], _is_partial=True)
 
         def lookup_bulk(self):
             params = {
