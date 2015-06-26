@@ -211,6 +211,40 @@ class NTBObject(object):
                 # Specified page limit reached
                 self.exhausted = True
 
+class Gruppe(NTBObject):
+    identifier = 'grupper'
+    FIELDS = [
+        'navngiving',
+        'status',
+        'navn',
+        'geojson',
+        'områder',
+        'kommuner',
+        'fylker',
+        'organisasjonsnr',
+        'beskrivelse',
+        'logo',
+        'ansatte',
+        'lenker',
+        'kontaktinfo',
+        'tags',
+        'foreldregruppe',
+        'privat',
+        'grupper'
+        'bilder',
+        'steder',
+        'url',
+    ]
+
+    def __repr__(self):
+        repr = '<Gruppe: %s (%s)>' % (self.object_id, self.navn)
+        # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
+        # explicit checks grow out of hand, consider replacing them with six.
+        if sys.version_info.major == 2:
+            return repr.encode('utf-8')
+        else:
+            return repr
+
 class Omrade(NTBObject):
     identifier = 'områder'
     FIELDS = [
