@@ -14,7 +14,7 @@ from . import events
 logger = logging.getLogger('turbasen')
 
 class NTBObject(object):
-    def __init__(self, document, etag=None, _is_partial=False):
+    def __init__(self, document, etag=None, is_partial=False):
         self._etag = etag
         self._saved = datetime.now()
 
@@ -23,7 +23,7 @@ class NTBObject(object):
         self.endret = document['endret']
         self.lisens = document['lisens']
         self.status = document['status']
-        self._is_partial = _is_partial
+        self._is_partial = is_partial
 
         # The 'navn' field may or may not be defined
         self.navn = document.get('navn')
