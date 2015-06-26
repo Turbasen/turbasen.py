@@ -8,3 +8,7 @@ class DocumentNotFound(Exception):
 class Unauthorized(Exception):
     """Thrown when a request returns a HTTP 401 Unathorized or 403 Forbidden status code"""
     pass
+
+class InvalidDocument(Exception):
+    """Thrown when updating or creating a document with invalid data"""
+    pass

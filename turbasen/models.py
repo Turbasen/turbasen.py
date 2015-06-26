@@ -8,7 +8,7 @@ import sys
 import requests
 
 from .settings import Settings
-from .exceptions import DocumentNotFound, Unauthorized
+from .exceptions import DocumentNotFound, Unauthorized, InvalidDocument
 from . import events
 
 logger = logging.getLogger('turbasen')
@@ -75,6 +75,52 @@ class NTBObject(object):
             setattr(self, variable_name, document.get(field))
         Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
         logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self.object_id, self._etag))
+
+    def save(self):
+        if self.object_id:
+            headers, document = self.put()
+        else:
+            headers, document = self.post()
+            self.object_id = document['_id']
+
+        self._etag = document['checksum']
+        self._saved = datetime.now()
+        self.endret = document['endret']
+        self.status = document['status']
+        self.lisens = document['lisens']
+
+    def post(self):
+        params = {}
+        if Settings.API_KEY is not None:
+            params['api_key'] = Settings.API_KEY
+
+        data = {field: getattr(self, field) for field in self.FIELDS}
+
+        events.trigger('api.post_object')
+        request = requests.post(
+            '%s%s/' % (Settings.ENDPOINT_URL, identifier),
+            params=params,
+            data=data,
+        )
+        if request.status_code in [401, 403]:
+            raise Unauthorized(
+                "Turbasen returned status code %s with the message: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
+                )
+            )
+        elif request.status_code in [400, 422]:
+            raise InvalidDocument(
+                "Turbasen returned status code %s with the message: \"%s\" and the following errors: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
+                    request.json()['errors'],
+                )
+            )
+        elif request.status_code == 304 and etag is not None:
+            return None
+
+        return request.headers, request.json()
 
     #
     # Lookup static methods
