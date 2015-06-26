@@ -14,7 +14,7 @@ def no_etag_cache():
     turbasen.configure(ETAG_CACHE_PERIOD=0)
 
 @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
-def test_get(configure_dev):
+def test_get_sted(configure_dev):
     sted = turbasen.Sted.get('52407fb375049e561500004e')
     assert sted.navn == 'Tjørnbrotbu'
     assert sted.ssr_id == 382116
