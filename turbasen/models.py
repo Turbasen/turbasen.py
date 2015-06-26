@@ -38,7 +38,7 @@ class NTBObject(object):
             return getattr(self, name)
         else:
             # Default behavior - no such attribute
-            raise AttributeError
+            raise AttributeError("'%s' object has no attribute '%s'" % (self, name))
 
     def fetch(self):
         """Retrieve this object's entire document"""
