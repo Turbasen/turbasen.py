@@ -14,19 +14,14 @@ from . import events
 logger = logging.getLogger('turbasen')
 
 class NTBObject(object):
-    def __init__(self, document, etag=None, is_partial=False):
+    def __init__(self, id=None, etag=None, is_partial=False, **kwargs):
+        self.object_id = id
         self._etag = etag
         self._saved = datetime.now()
-
-        self.object_id = document['_id']
-        self.tilbyder = document['tilbyder']
-        self.endret = document['endret']
-        self.lisens = document['lisens']
-        self.status = document['status']
         self._is_partial = is_partial
 
-        # The 'navn' field may or may not be defined
-        self.navn = document.get('navn')
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     def __getattr__(self, name):
         """On attribute lookup failure, if the object is only partially retrieved, get the rest of its data and try
@@ -92,7 +87,7 @@ class NTBObject(object):
         if object is None:
             logger.debug("[get %s/%s]: Not in local cache, performing GET request..." % (cls.identifier, object_id))
             headers, document = NTBObject.get_document(cls.identifier, object_id)
-            object = cls(document, etag=headers['etag'])
+            object = cls(id=document.pop('_id'), etag=headers['etag'], **document)
             object.set_document(headers, document)
             return object
         else:
@@ -175,7 +170,7 @@ class NTBObject(object):
 
             self.document_index += 1
             document = self.document_list[self.document_index - 1]
-            return self.cls(document, etag=document['checksum'], _is_partial=True)
+            return self.cls(id=document.pop('_id'), etag=document['checksum'], _is_partial=True, **document)
 
         def lookup_bulk(self):
             params = {
