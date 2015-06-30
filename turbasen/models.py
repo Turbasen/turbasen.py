@@ -93,7 +93,7 @@ class NTBObject(object):
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
 
-        data = {field: getattr(self, field) for field in self.FIELDS}
+        data = {field: getattr(self, self.FIELD_MAP_UNICODE[field]) for field in self.FIELDS}
 
         events.trigger('api.post_object')
         request = requests.post(
