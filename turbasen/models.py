@@ -61,7 +61,6 @@ class NTBObject(object):
             logger.debug("[refresh %s]: Document was not modified" % self.object_id)
             self._saved = datetime.now()
             Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
-            return
         else:
             logger.debug("[refresh %s]: Document was modified, resetting fields..." % self.object_id)
             headers, document = result

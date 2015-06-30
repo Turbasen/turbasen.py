@@ -71,3 +71,4 @@ turbasen.handle_event('api.get_object', my_handler)
 
 * `api.get_object`: Triggered whenever a GET request is made to retrieve a single object the REST API.
 * `api.get_objects`: Triggered whenever a GET request is made to retrieve a list of objects from the REST API.
+* `api.post_object`: Triggered whenever an object is POSTed to the REST API.
