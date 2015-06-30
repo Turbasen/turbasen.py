@@ -113,7 +113,7 @@ class NTBObject(object):
                 "Turbasen returned status code %s with the message: \"%s\" and the following errors: \"%s\"" % (
                     request.status_code,
                     request.json()['message'],
-                    request.json()['errors'],
+                    request.json().get('errors', ''),
                 )
             )
 
