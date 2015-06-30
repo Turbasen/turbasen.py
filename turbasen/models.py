@@ -189,6 +189,14 @@ class NTBObject(object):
             logger.debug("[lookup %s (pages=%s)]: Retrieved from cache" % (cls.identifier, pages))
         return objects
 
+    @staticmethod
+    def _map_fieldnames(fields):
+        """Returns a tuple of dict mapping of field names unicode -> ascii, and ascii -> unicode"""
+        return (
+            {f: f.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a') for f in fields},
+            {f.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a'): f for f in fields},
+        )
+
     class NTBIterator:
         """Document iterator"""
         def __init__(self, cls, pages):
@@ -275,6 +283,7 @@ class Gruppe(NTBObject):
         'steder',
         'url',
     ]
+    FIELD_MAP_UNICODE, FIELD_MAP_ASCII = NTBObject._map_fieldnames(FIELDS)
 
     def __repr__(self):
         repr = '<Gruppe: %s (%s)>' % (self.object_id, self.navn)
@@ -296,6 +305,7 @@ class Omrade(NTBObject):
         'beskrivelse',
         'bilder',
     ]
+    FIELD_MAP_UNICODE, FIELD_MAP_ASCII = NTBObject._map_fieldnames(FIELDS)
 
     def __repr__(self):
         repr = '<Område: %s (%s)>' % (self.object_id, self.navn)
@@ -333,6 +343,7 @@ class Sted(NTBObject):
         'kart',
         'turkart',
     ]
+    FIELD_MAP_UNICODE, FIELD_MAP_ASCII = NTBObject._map_fieldnames(FIELDS)
 
     def __repr__(self):
         repr = '<Sted: %s (%s)>' % (self.object_id, self.navn)
