@@ -103,19 +103,19 @@ class NTBObject(object):
             params=params,
             data=json.dumps(data),
         )
-        if request.status_code in [401, 403]:
-            raise Unauthorized(
-                "Turbasen returned status code %s with the message: \"%s\"" % (
-                    request.status_code,
-                    request.json()['message'],
-                )
-            )
-        elif request.status_code in [400, 422]:
+        if request.status_code in [400, 422]:
             raise InvalidDocument(
                 "Turbasen returned status code %s with the message: \"%s\" and the following errors: \"%s\"" % (
                     request.status_code,
                     request.json()['message'],
                     request.json().get('errors', ''),
+                )
+            )
+        elif request.status_code in [401, 403]:
+            raise Unauthorized(
+                "Turbasen returned status code %s with the message: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
                 )
             )
 
@@ -159,7 +159,9 @@ class NTBObject(object):
             headers=headers,
             params=params,
         )
-        if request.status_code in [400, 404]:
+        if request.status_code == 304 and etag is not None:
+            return None
+        elif request.status_code in [400, 404]:
             raise DocumentNotFound(
                 "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (identifier, object_id)
             )
@@ -170,8 +172,6 @@ class NTBObject(object):
                     request.json()['message'],
                 )
             )
-        elif request.status_code == 304 and etag is not None:
-            return None
 
         return request.headers, request.json()
 
