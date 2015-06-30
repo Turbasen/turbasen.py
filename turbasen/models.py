@@ -119,7 +119,7 @@ class NTBObject(object):
                 )
             )
 
-        return request.headers, request.json()
+        return request.headers, request.json()['document']
 
     #
     # Lookup static methods
