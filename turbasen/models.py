@@ -116,8 +116,6 @@ class NTBObject(object):
                     request.json()['errors'],
                 )
             )
-        elif request.status_code == 304 and etag is not None:
-            return None
 
         return request.headers, request.json()
 
