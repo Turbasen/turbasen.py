@@ -1,21 +1,14 @@
 from setuptools import setup
 
-from io import open
-from os import path
-
 name = 'turbasen'
 VERSION = '2.1.5'
-
-here = path.abspath(path.dirname(__file__))
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
 
 setup(
     name=name,
     packages=[name],
     version=VERSION,
     description='Client for Nasjonal Turbase REST API',
-    long_description=long_description,
+    long_description='See https://github.com/Turbasen/turbasen.py/blob/master/README.md',
     author='Ali Kaafarani',
     author_email='ali.kaafarani@turistforeningen.no',
     url='https://github.com/Turbasen/turbasen.py',
