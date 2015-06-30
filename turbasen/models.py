@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from datetime import datetime, timedelta
+import json
 import logging
 import sys
 
@@ -98,8 +99,9 @@ class NTBObject(object):
         events.trigger('api.post_object')
         request = requests.post(
             '%s%s' % (Settings.ENDPOINT_URL, self.identifier),
+            headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
-            data=data,
+            data=json.dumps(data),
         )
         if request.status_code in [401, 403]:
             raise Unauthorized(
