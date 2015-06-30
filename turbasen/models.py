@@ -97,7 +97,7 @@ class NTBObject(object):
 
         events.trigger('api.post_object')
         request = requests.post(
-            '%s%s' % (Settings.ENDPOINT_URL, identifier),
+            '%s%s' % (Settings.ENDPOINT_URL, self.identifier),
             params=params,
             data=data,
         )
