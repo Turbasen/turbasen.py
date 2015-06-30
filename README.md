@@ -6,9 +6,35 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/turbasen.svg "Python versions")](https://pypi.python.org/pypi/turbasen)
 [![Dependency status](https://img.shields.io/requires/github/Turbasen/turbasen.py.svg "Dependency status")](https://requires.io/github/Turbasen/turbasen.py/requirements/)
 
-Python client for Nasjonal Turbase
+Python client for [Nasjonal Turbase](http://www.nasjonalturbase.no/)
 
 ## Usage
+
+turbasen.py implements the following datatypes:
+
+* `Gruppe`
+* `Omrade`
+* `Sted`
+
+Import them from the `turbasen` module.
+
+### Static methods
+
+`def lookup(pages=1)`
+
+Retrieve a list of partial objects. Set `pages` to the number of pages you want returned, or `None` to return all objects (might take a while). `settings.LIMIT` objects are returned per page.
+
+`def get(object_id)`
+
+Retrieve the entire document for the object with the given ID.
+
+### Instance methods
+
+`def save()`
+
+Save the object by performing a `POST` if the object is new (has no object id) or a `PUT` if it's an existing object.
+
+## Example
 
 ```python
 In [1]: from turbasen import Sted, Omrade
