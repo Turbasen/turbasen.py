@@ -15,9 +15,19 @@ from . import events
 logger = logging.getLogger('turbasen')
 
 class NTBObject(object):
+    COMMON_FIELDS = [
+        'tilbyder',
+        'endret',
+        'lisens',
+        'navngiving',
+        'status',
+        'navn',
+    ]
+
     def __init__(self, id=None, etag=None, is_partial=False, **fields):
         self.object_id = id
         self._is_partial = is_partial
+        self._extra = {}
         self.set_data(etag, **fields)
 
     def __repr__(self):
@@ -74,8 +84,18 @@ class NTBObject(object):
         """Save the given data on this object"""
         self._etag = etag
         self._saved = datetime.now()
+
         for key, value in fields.items():
-            setattr(self, self.FIELD_MAP_UNICODE.get(key, key), value)
+            if key in self.FIELDS:
+                # Expected data fields
+                setattr(self, self.FIELD_MAP_UNICODE.get(key, key), value)
+            elif key in NTBObject.COMMON_FIELDS:
+                # Expected common metadata
+                setattr(self, key, value)
+            else:
+                # Unexpected extra attributes - group in the 'extra' dictionary
+                self._extra[key] = value
+
         Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
         logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self.object_id, self._etag))
 
@@ -120,11 +140,9 @@ class NTBObject(object):
             headers, document = self.post()
             self.object_id = document['_id']
 
-        self._etag = document['checksum']
-        self._saved = datetime.now()
-        self.endret = document['endret']
-        self.status = document['status']
-        self.lisens = document['lisens']
+        # Note that we're resetting all fields here. The main reason is to reset the etag and update metadata fields,
+        # and although all other fields are reset, they should return as they were.
+        self.set_data(etag=document.pop('checksum'), **document)
 
     def post(self):
         params = {}
@@ -308,9 +326,6 @@ class NTBObject(object):
 class Gruppe(NTBObject):
     identifier = 'grupper'
     FIELDS = [
-        'navngiving',
-        'status',
-        'navn',
         'geojson',
         'områder',
         'kommuner',
@@ -334,8 +349,6 @@ class Gruppe(NTBObject):
 class Omrade(NTBObject):
     identifier = 'områder'
     FIELDS = [
-        'navngiving',
-        'status',
         'geojson',
         'kommuner',
         'fylker',
@@ -347,8 +360,6 @@ class Omrade(NTBObject):
 class Sted(NTBObject):
     identifier = 'steder'
     FIELDS = [
-        'navngiving',
-        'status',
         'navn_alt',
         'ssr_id',
         'geojson',
