@@ -20,6 +20,21 @@ class NTBObject(object):
         self._is_partial = is_partial
         self.set_data(etag, **fields)
 
+    def __repr__(self):
+        if self._is_partial:
+            # Since repr may be called during an AttributeError, we can't check if the 'navn' attribute actually is
+            # defined - since if it isn't, we'll recurse infinitely between fetch and repr.
+            repr = '<%s: %s (?)>' % (self.__class__.__name__, self.object_id)
+        else:
+            repr = '<%s: %s (%s)>' % (self.__class__.__name__, self.object_id, self.navn)
+
+        # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
+        # explicit checks grow out of hand, consider replacing them with six.
+        if sys.version_info.major == 2:
+            return repr.encode('utf-8')
+        else:
+            return repr
+
     #
     # Attribute manipulation
     # - Partial objects have not all attributes assigned; when one is accessed, retrieve the entire document first
@@ -307,21 +322,6 @@ class Gruppe(NTBObject):
     ]
     FIELD_MAP_UNICODE, FIELD_MAP_ASCII = NTBObject._map_fieldnames(FIELDS)
 
-    def __repr__(self):
-        if self._is_partial:
-            # Since repr may be called during an AttributeError, we can't check if the 'navn' attribute actually is
-            # defined - since if it isn't, we'll recurse infinitely between fetch and repr.
-            repr = '<Gruppe: %s (?)>' % self.object_id
-        else:
-            repr = '<Gruppe: %s (%s)>' % (self.object_id, self.navn)
-
-        # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
-        # explicit checks grow out of hand, consider replacing them with six.
-        if sys.version_info.major == 2:
-            return repr.encode('utf-8')
-        else:
-            return repr
-
 class Omrade(NTBObject):
     identifier = 'områder'
     FIELDS = [
@@ -334,21 +334,6 @@ class Omrade(NTBObject):
         'bilder',
     ]
     FIELD_MAP_UNICODE, FIELD_MAP_ASCII = NTBObject._map_fieldnames(FIELDS)
-
-    def __repr__(self):
-        if self._is_partial:
-            # Since repr may be called during an AttributeError, we can't check if the 'navn' attribute actually is
-            # defined - since if it isn't, we'll recurse infinitely between fetch and repr.
-            repr = '<Område: %s (?)>' % self.object_id
-        else:
-            repr = '<Område: %s (%s)>' % (self.object_id, self.navn)
-
-        # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
-        # explicit checks grow out of hand, consider replacing them with six.
-        if sys.version_info.major == 2:
-            return repr.encode('utf-8')
-        else:
-            return repr
 
 class Sted(NTBObject):
     identifier = 'steder'
@@ -378,18 +363,3 @@ class Sted(NTBObject):
         'turkart',
     ]
     FIELD_MAP_UNICODE, FIELD_MAP_ASCII = NTBObject._map_fieldnames(FIELDS)
-
-    def __repr__(self):
-        if self._is_partial:
-            # Since repr may be called during an AttributeError, we can't check if the 'navn' attribute actually is
-            # defined - since if it isn't, we'll recurse infinitely between fetch and repr.
-            repr = '<Sted: %s (?)>' % self.object_id
-        else:
-            repr = '<Sted: %s (%s)>' % (self.object_id, self.navn)
-
-        # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
-        # explicit checks grow out of hand, consider replacing them with six.
-        if sys.version_info.major == 2:
-            return repr.encode('utf-8')
-        else:
-            return repr
