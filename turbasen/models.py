@@ -10,6 +10,7 @@ import requests
 
 from .settings import Settings
 from .exceptions import DocumentNotFound, Unauthorized, InvalidDocument
+from .decorators import requires_object_id
 from . import events
 
 logger = logging.getLogger('turbasen')
@@ -61,8 +62,8 @@ class NTBObject(object):
 
     def __getattr__(self, name):
         """On attribute lookup failure, if the object is only partially retrieved, get the rest of its data and try
-        again"""
-        if not name.startswith('_') and self._is_partial:
+        again. Note that this method is only called whenever an attribute lookup *fails*."""
+        if self._is_partial and self.object_id is not None and not name.startswith('_'):
             # Note that we're ignoring internal non-existing attributes, which can occur in various situations, e.g.
             # when serializing for caching.
             logger.debug("[getattr %s.%s]: Accessed non-existing attribute on partial object; fetching document..." % (
@@ -103,11 +104,13 @@ class NTBObject(object):
     # Data retrieval from Turbasen
     #
 
+    @requires_object_id
     def fetch(self):
         """Retrieve this object's entire document unconditionally (does not use ETag)"""
         headers, document = NTBObject.get_document(self.identifier, self.object_id)
         self.set_data(headers['etag'], **document)
 
+    @requires_object_id
     def refresh(self):
         """If the object is expired, refetch it (using the local ETag)"""
         if self._etag is not None and self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
@@ -133,6 +136,7 @@ class NTBObject(object):
     # Data push to Turbasen
     #
 
+    @requires_object_id
     def save(self):
         if self.object_id:
             headers, document = self.put()
@@ -144,6 +148,7 @@ class NTBObject(object):
         # and although all other fields are reset, they should return as they were.
         self.set_data(etag=document.pop('checksum'), **document)
 
+    @requires_object_id
     def post(self):
         params = {}
         if Settings.API_KEY is not None:
