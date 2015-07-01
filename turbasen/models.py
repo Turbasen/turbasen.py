@@ -22,7 +22,7 @@ class NTBObject(object):
         self._is_partial = is_partial
 
         for key, value in kwargs.items():
-            setattr(self, key, value)
+            setattr(self, self.FIELD_MAP_UNICODE.get(key, key), value)
 
     def __getattr__(self, name):
         """On attribute lookup failure, if the object is only partially retrieved, get the rest of its data and try
