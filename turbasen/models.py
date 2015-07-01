@@ -24,6 +24,11 @@ class NTBObject(object):
         for key, value in kwargs.items():
             setattr(self, self.FIELD_MAP_UNICODE.get(key, key), value)
 
+    #
+    # Attribute manipulation
+    # - Partial objects have not all attributes assigned; when one is accessed, retrieve the entire document first
+    #
+
     def __getattr__(self, name):
         """On attribute lookup failure, if the object is only partially retrieved, get the rest of its data and try
         again"""
@@ -41,13 +46,31 @@ class NTBObject(object):
             # Default behavior - no such attribute
             raise AttributeError("'%s' object has no attribute '%s'" % (self, name))
 
+    #
+    # Internal data handling
+    #
+
+    def set_document(self, headers, document):
+        """Save the given data on this object"""
+        self._etag = headers['etag']
+        self._saved = datetime.now()
+        for field in self.FIELDS:
+            variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
+            setattr(self, variable_name, document.get(field))
+        Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
+        logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self.object_id, self._etag))
+
+    #
+    # Data retrieval from Turbasen
+    #
+
     def fetch(self):
-        """Retrieve this object's entire document"""
+        """Retrieve this object's entire document unconditionally (does not use ETag)"""
         headers, document = NTBObject.get_document(self.identifier, self.object_id)
         self.set_document(headers, document)
 
     def refresh(self):
-        """Check if the object is modified, and if so, reset its data"""
+        """If the object is expired, refetch it (using the local ETag)"""
         if self._etag is not None and self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
             logger.debug("[refresh %s]: Object is younger than ETag cache period (%s), skipping ETag check" % (
                 self.object_id,
@@ -67,14 +90,9 @@ class NTBObject(object):
             headers, document = result
             self.set_document(headers, document)
 
-    def set_document(self, headers, document):
-        self._etag = headers['etag']
-        self._saved = datetime.now()
-        for field in self.FIELDS:
-            variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
-            setattr(self, variable_name, document.get(field))
-        Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
-        logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self.object_id, self._etag))
+    #
+    # Data push to Turbasen
+    #
 
     def save(self):
         if self.object_id:
@@ -125,12 +143,12 @@ class NTBObject(object):
         return request.headers, request.json()['document']
 
     #
-    # Lookup static methods
+    # Public static data retrieval methods
     #
 
     @classmethod
     def get(cls, object_id):
-        """Retrieve a single object from NTB by its object id"""
+        """Retrieve a single object from Turbasen by its object id"""
         object = Settings.CACHE.get('turbasen.object.%s' % object_id)
         if object is None:
             logger.debug("[get %s/%s]: Not in local cache, performing GET request..." % (cls.identifier, object_id))
@@ -142,6 +160,27 @@ class NTBObject(object):
             logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (cls.identifier, object_id))
             object.refresh()
             return object
+
+    @classmethod
+    def lookup(cls, pages=1):
+        """Retrieve a complete list of these objects, partially fetched. Specify how many pages you want retrieved
+        (result count in a page is configured with LIMIT), or set to None to retrieve all documents."""
+        objects = Settings.CACHE.get('turbasen.objects.%s.%s' % (cls.identifier, pages))
+        if objects is None:
+            logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (cls.identifier, pages))
+            objects = list(NTBObject.NTBIterator(cls, pages))
+            Settings.CACHE.set(
+                'turbasen.objects.%s.%s' % (cls.identifier, pages),
+                objects,
+                Settings.CACHE_LOOKUP_PERIOD,
+            )
+        else:
+            logger.debug("[lookup %s (pages=%s)]: Retrieved from cache" % (cls.identifier, pages))
+        return objects
+
+    #
+    # Internal static data retrieval methods
+    #
 
     @staticmethod
     def get_document(identifier, object_id, etag=None):
@@ -175,22 +214,9 @@ class NTBObject(object):
 
         return request.headers, request.json()
 
-    @classmethod
-    def lookup(cls, pages=1):
-        """Retrieve a complete list of these objects, partially fetched. Specify how many pages you want retrieved
-        (result count in a page is configured with LIMIT), or set to None to retrieve all documents."""
-        objects = Settings.CACHE.get('turbasen.objects.%s.%s' % (cls.identifier, pages))
-        if objects is None:
-            logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (cls.identifier, pages))
-            objects = list(NTBObject.NTBIterator(cls, pages))
-            Settings.CACHE.set(
-                'turbasen.objects.%s.%s' % (cls.identifier, pages),
-                objects,
-                Settings.CACHE_LOOKUP_PERIOD,
-            )
-        else:
-            logger.debug("[lookup %s (pages=%s)]: Retrieved from cache" % (cls.identifier, pages))
-        return objects
+    #
+    # Internal utilities
+    #
 
     @staticmethod
     def _map_fieldnames(fields):
