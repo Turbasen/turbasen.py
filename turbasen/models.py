@@ -308,7 +308,13 @@ class Gruppe(NTBObject):
     FIELD_MAP_UNICODE, FIELD_MAP_ASCII = NTBObject._map_fieldnames(FIELDS)
 
     def __repr__(self):
-        repr = '<Gruppe: %s (%s)>' % (self.object_id, self.navn)
+        if self._is_partial:
+            # Since repr may be called during an AttributeError, we can't check if the 'navn' attribute actually is
+            # defined - since if it isn't, we'll recurse infinitely between fetch and repr.
+            repr = '<Gruppe: %s (?)>' % self.object_id
+        else:
+            repr = '<Gruppe: %s (%s)>' % (self.object_id, self.navn)
+
         # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
         # explicit checks grow out of hand, consider replacing them with six.
         if sys.version_info.major == 2:
@@ -330,7 +336,13 @@ class Omrade(NTBObject):
     FIELD_MAP_UNICODE, FIELD_MAP_ASCII = NTBObject._map_fieldnames(FIELDS)
 
     def __repr__(self):
-        repr = '<Område: %s (%s)>' % (self.object_id, self.navn)
+        if self._is_partial:
+            # Since repr may be called during an AttributeError, we can't check if the 'navn' attribute actually is
+            # defined - since if it isn't, we'll recurse infinitely between fetch and repr.
+            repr = '<Område: %s (?)>' % self.object_id
+        else:
+            repr = '<Område: %s (%s)>' % (self.object_id, self.navn)
+
         # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
         # explicit checks grow out of hand, consider replacing them with six.
         if sys.version_info.major == 2:
@@ -368,7 +380,13 @@ class Sted(NTBObject):
     FIELD_MAP_UNICODE, FIELD_MAP_ASCII = NTBObject._map_fieldnames(FIELDS)
 
     def __repr__(self):
-        repr = '<Sted: %s (%s)>' % (self.object_id, self.navn)
+        if self._is_partial:
+            # Since repr may be called during an AttributeError, we can't check if the 'navn' attribute actually is
+            # defined - since if it isn't, we'll recurse infinitely between fetch and repr.
+            repr = '<Sted: %s (?)>' % self.object_id
+        else:
+            repr = '<Sted: %s (%s)>' % (self.object_id, self.navn)
+
         # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
         # explicit checks grow out of hand, consider replacing them with six.
         if sys.version_info.major == 2:
