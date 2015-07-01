@@ -15,14 +15,10 @@ from . import events
 logger = logging.getLogger('turbasen')
 
 class NTBObject(object):
-    def __init__(self, id=None, etag=None, is_partial=False, **kwargs):
+    def __init__(self, id=None, etag=None, is_partial=False, **fields):
         self.object_id = id
-        self._etag = etag
-        self._saved = datetime.now()
         self._is_partial = is_partial
-
-        for key, value in kwargs.items():
-            setattr(self, self.FIELD_MAP_UNICODE.get(key, key), value)
+        self.set_data(etag, **fields)
 
     #
     # Attribute manipulation
@@ -50,13 +46,12 @@ class NTBObject(object):
     # Internal data handling
     #
 
-    def set_document(self, headers, document):
+    def set_data(self, etag, **fields):
         """Save the given data on this object"""
-        self._etag = headers['etag']
+        self._etag = etag
         self._saved = datetime.now()
-        for field in self.FIELDS:
-            variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
-            setattr(self, variable_name, document.get(field))
+        for key, value in fields.items():
+            setattr(self, self.FIELD_MAP_UNICODE.get(key, key), value)
         Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
         logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self.object_id, self._etag))
 
@@ -67,7 +62,7 @@ class NTBObject(object):
     def fetch(self):
         """Retrieve this object's entire document unconditionally (does not use ETag)"""
         headers, document = NTBObject.get_document(self.identifier, self.object_id)
-        self.set_document(headers, document)
+        self.set_data(headers['etag'], **document)
 
     def refresh(self):
         """If the object is expired, refetch it (using the local ETag)"""
@@ -88,7 +83,7 @@ class NTBObject(object):
         else:
             logger.debug("[refresh %s]: Document was modified, resetting fields..." % self.object_id)
             headers, document = result
-            self.set_document(headers, document)
+            self.set_data(headers['etag'], **document)
 
     #
     # Data push to Turbasen
@@ -153,9 +148,7 @@ class NTBObject(object):
         if object is None:
             logger.debug("[get %s/%s]: Not in local cache, performing GET request..." % (cls.identifier, object_id))
             headers, document = NTBObject.get_document(cls.identifier, object_id)
-            object = cls(id=document.pop('_id'), etag=headers['etag'], **document)
-            object.set_document(headers, document)
-            return object
+            return cls(id=document.pop('_id'), etag=headers['etag'], **document)
         else:
             logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (cls.identifier, object_id))
             object.refresh()
@@ -252,7 +245,7 @@ class NTBObject(object):
 
             self.document_index += 1
             document = self.document_list[self.document_index - 1]
-            return self.cls(id=document.pop('_id'), etag=document['checksum'], _is_partial=True, **document)
+            return self.cls(id=document.pop('_id'), etag=document['checksum'], is_partial=True, **document)
 
         def lookup_bulk(self):
             params = {
