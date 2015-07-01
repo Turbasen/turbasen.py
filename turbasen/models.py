@@ -21,12 +21,21 @@ class NTBObject(object):
         self.set_data(etag, **fields)
 
     def __repr__(self):
-        if self._is_partial:
-            # Since repr may be called during an AttributeError, we can't check if the 'navn' attribute actually is
-            # defined - since if it isn't, we'll recurse infinitely between fetch and repr.
-            repr = '<%s: %s (?)>' % (self.__class__.__name__, self.object_id)
-        else:
-            repr = '<%s: %s (%s)>' % (self.__class__.__name__, self.object_id, self.navn)
+        # Since repr may be called during an AttributeError, we have to avoid __getattr__ when seeing if object_id and
+        # navn are available, or we might end up in an infinite loop. It's not catchable, because fetch would raise an
+        # AttributeError, which would try to build a representation, which would try to get an unavailable attribute,
+        # and so on.
+        try:
+            object_id = self.__getattribute__('object_id')
+        except AttributeError:
+            object_id = '?'
+
+        try:
+            navn = self.__getattribute__('navn')
+        except AttributeError:
+            navn = '?'
+
+        repr = '<%s: %s (%s)>' % (self.__class__.__name__, object_id, navn)
 
         # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
         # explicit checks grow out of hand, consider replacing them with six.
