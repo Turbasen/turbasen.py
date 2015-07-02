@@ -198,6 +198,7 @@ class NTBObject(object):
         if request.status_code != 204:
             logger.warning("Turbasen returned status code %s on DELETE; expected 204" % request.status_code)
 
+        Settings.CACHE.delete('turbasen.object.%s' % self.object_id)
         self.object_id = None
         return request.headers
 
