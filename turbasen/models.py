@@ -189,6 +189,48 @@ class NTBObject(object):
 
         return request.headers, request.json()['document']
 
+    @requires_object_id
+    def _put(self):
+        params = {}
+        if Settings.API_KEY is not None:
+            params['api_key'] = Settings.API_KEY
+
+        events.trigger('api.put_object')
+        request = requests.put(
+            '%s%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self.object_id),
+            headers={'Content-Type': 'application/json; charset=utf-8'},
+            params=params,
+            # Note that we're not validating required fields, let the API handle that
+            data=json.dumps(self._get_data()),
+        )
+        if request.status_code in [400, 422]:
+            raise InvalidDocument(
+                "Turbasen returned status code %s with the message: \"%s\" and the following errors: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
+                    request.json().get('errors', ''),
+                )
+            )
+        elif request.status_code in [401, 403]:
+            raise Unauthorized(
+                "Turbasen returned status code %s with the message: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
+                )
+            )
+        elif request.status_code == 404:
+            raise DocumentNotFound(
+                "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (
+                    self.identifier,
+                    self.object_id,
+                )
+            )
+
+        for warning in request.json().get('warnings', []):
+            logger.warning("Turbasen POST warning: %s" % warning)
+
+        return request.headers, request.json()['document']
+
     #
     # Public static data retrieval methods
     #
