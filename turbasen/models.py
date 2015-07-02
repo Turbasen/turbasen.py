@@ -105,8 +105,9 @@ class NTBObject(object):
                 # Unexpected extra attributes - group in the 'extra' dictionary
                 self._extra[key] = value
 
-        Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
-        logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self.object_id, self._etag))
+        if self.object_id is not None and etag is not None:
+            Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
+            logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self.object_id, self._etag))
 
     #
     # Data retrieval from Turbasen
