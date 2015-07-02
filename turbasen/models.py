@@ -181,6 +181,9 @@ class NTBObject(object):
                 )
             )
 
+        if request.status_code != 204:
+            logger.warning("Turbasen returned status code %s on DELETE; expected 204" % request.status_code)
+
         return request.headers
 
 
@@ -212,6 +215,9 @@ class NTBObject(object):
                     request.json()['message'],
                 )
             )
+
+        if request.status_code != 201:
+            logger.warning("Turbasen returned status code %s on POST; expected 201" % request.status_code)
 
         for warning in request.json().get('warnings', []):
             logger.warning("Turbasen POST warning: %s" % warning)
@@ -254,6 +260,9 @@ class NTBObject(object):
                     self.object_id,
                 )
             )
+
+        if request.status_code != 200:
+            logger.warning("Turbasen returned status code %s on PUT; expected 200" % request.status_code)
 
         for warning in request.json().get('warnings', []):
             logger.warning("Turbasen PUT warning: %s" % warning)
@@ -327,6 +336,9 @@ class NTBObject(object):
                     request.json()['message'],
                 )
             )
+
+        if request.status_code != 200:
+            logger.warning("Turbasen returned status code %s on GET; expected 200" % request.status_code)
 
         return request.headers, request.json()
 
