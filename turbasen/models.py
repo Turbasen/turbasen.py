@@ -2,51 +2,125 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from datetime import datetime, timedelta
+import json
 import logging
 import sys
 
 import requests
 
 from .settings import Settings
-from .exceptions import DocumentNotFound, Unauthorized
+from .exceptions import DocumentNotFound, Unauthorized, InvalidDocument
+from .decorators import requires_object_id
 from . import events
 
 logger = logging.getLogger('turbasen')
 
 class NTBObject(object):
-    def __init__(self, id=None, etag=None, is_partial=False, **kwargs):
-        self.object_id = id
-        self._etag = etag
-        self._saved = datetime.now()
-        self._is_partial = is_partial
+    COMMON_FIELDS = [
+        'tilbyder',
+        'endret',
+        'lisens',
+        'navngiving',
+        'status',
+        'navn',
+    ]
 
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+    def __init__(self, _meta={}, **fields):
+        self.object_id = _meta.get('id')
+        self._is_partial = _meta.get('is_partial', False)
+        self._extra = {}
+        self._set_data(_meta.get('etag'), fields)
+
+    def __repr__(self):
+        # Since repr may be called during an AttributeError, we have to avoid __getattr__ when seeing if object_id and
+        # navn are available, or we might end up in an infinite loop. It's not catchable, because fetch would raise an
+        # AttributeError, which would try to build a representation, which would try to get an unavailable attribute,
+        # and so on.
+        try:
+            object_id = self.__getattribute__('object_id')
+        except AttributeError:
+            object_id = '?'
+
+        try:
+            navn = self.__getattribute__('navn')
+        except AttributeError:
+            navn = '?'
+
+        repr = '<%s: %s (%s)>' % (self.__class__.__name__, object_id, navn)
+
+        # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
+        # explicit checks grow out of hand, consider replacing them with six.
+        if sys.version_info.major == 2:
+            return repr.encode('utf-8')
+        else:
+            return repr
+
+    #
+    # Attribute manipulation
+    # - Partial objects have not all attributes assigned; when one is accessed, retrieve the entire document first
+    #
 
     def __getattr__(self, name):
         """On attribute lookup failure, if the object is only partially retrieved, get the rest of its data and try
-        again"""
-        if not name.startswith('_') and self._is_partial:
+        again. Note that this method is only called whenever an attribute lookup *fails*."""
+        if self._is_partial and self.object_id is not None and not name.startswith('_'):
             # Note that we're ignoring internal non-existing attributes, which can occur in various situations, e.g.
             # when serializing for caching.
             logger.debug("[getattr %s.%s]: Accessed non-existing attribute on partial object; fetching document..." % (
                 self.object_id,
                 name,
             ))
-            self.fetch()
+            self._fetch()
             self._is_partial = False
             return getattr(self, name)
         else:
             # Default behavior - no such attribute
             raise AttributeError("'%s' object has no attribute '%s'" % (self, name))
 
-    def fetch(self):
-        """Retrieve this object's entire document"""
-        headers, document = NTBObject.get_document(self.identifier, self.object_id)
-        self.set_document(headers, document)
+    #
+    # Internal data handling
+    #
 
-    def refresh(self):
-        """Check if the object is modified, and if so, reset its data"""
+    def _get_data(self, include_common=True):
+        """Returns a dict of all data fields on this object. Set include_common to False to only return fields specific
+        to this datatype."""
+        field_names = [self.FIELD_MAP_UNICODE[f] for f in self.FIELDS]
+        if include_common:
+            field_names += self.COMMON_FIELDS
+        return {field: getattr(self, field) for field in field_names if hasattr(self, field)}
+
+    def _set_data(self, etag, fields):
+        """Save the given data on this object"""
+        self._etag = etag
+        self._saved = datetime.now()
+
+        for key, value in fields.items():
+            if key in self.FIELDS:
+                # Expected data fields
+                setattr(self, self.FIELD_MAP_UNICODE.get(key, key), value)
+            elif key in NTBObject.COMMON_FIELDS:
+                # Expected common metadata
+                setattr(self, key, value)
+            else:
+                # Unexpected extra attributes - group in the 'extra' dictionary
+                self._extra[key] = value
+
+        Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
+        logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self.object_id, self._etag))
+
+    #
+    # Data retrieval from Turbasen
+    #
+
+    @requires_object_id
+    def _fetch(self):
+        """Retrieve this object's entire document unconditionally (does not use ETag)"""
+        headers, document = NTBObject._get_document(self.identifier, self.object_id)
+        self._set_data(etag=headers['etag'], fields=document)
+
+    @requires_object_id
+    def _refresh(self):
+        """If the object is expired, refetch it (using the local ETag)"""
         if self._etag is not None and self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
             logger.debug("[refresh %s]: Object is younger than ETag cache period (%s), skipping ETag check" % (
                 self.object_id,
@@ -55,65 +129,49 @@ class NTBObject(object):
             return
 
         logger.debug("[refresh %s]: ETag cache period expired, performing request..." % self.object_id)
-        result = NTBObject.get_document(self.identifier, self.object_id, self._etag)
+        result = NTBObject._get_document(self.identifier, self.object_id, self._etag)
         if result is None:
             # Document is not modified, reset the etag check timeout
             logger.debug("[refresh %s]: Document was not modified" % self.object_id)
             self._saved = datetime.now()
             Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
-            return
         else:
             logger.debug("[refresh %s]: Document was modified, resetting fields..." % self.object_id)
             headers, document = result
-            self.set_document(headers, document)
-
-    def set_document(self, headers, document):
-        self._etag = headers['etag']
-        self._saved = datetime.now()
-        for field in self.FIELDS:
-            variable_name = field.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a')
-            setattr(self, variable_name, document.get(field))
-        Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
-        logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self.object_id, self._etag))
+            self._set_data(etag=headers['etag'], fields=document)
 
     #
-    # Lookup static methods
+    # Data push to Turbasen
     #
 
-    @classmethod
-    def get(cls, object_id):
-        """Retrieve a single object from NTB by its object id"""
-        object = Settings.CACHE.get('turbasen.object.%s' % object_id)
-        if object is None:
-            logger.debug("[get %s/%s]: Not in local cache, performing GET request..." % (cls.identifier, object_id))
-            headers, document = NTBObject.get_document(cls.identifier, object_id)
-            object = cls(id=document.pop('_id'), etag=headers['etag'], **document)
-            object.set_document(headers, document)
-            return object
+    def save(self):
+        if self.object_id:
+            headers, document = self._put()
         else:
-            logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (cls.identifier, object_id))
-            object.refresh()
-            return object
+            headers, document = self._post()
+            self.object_id = document['_id']
 
-    @staticmethod
-    def get_document(identifier, object_id, etag=None):
+        # Note that we're resetting all fields here. The main reason is to reset the etag and update metadata fields,
+        # and although all other fields are reset, they should return as they were.
+        self._set_data(etag=document.pop('checksum'), fields=document)
+
+    @requires_object_id
+    def delete(self):
         params = {}
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
 
-        headers = {}
-        if etag is not None:
-            headers['if-none-match'] = etag
-
-        events.trigger('api.get_object')
-        request = requests.get(
-            '%s%s/%s/' % (Settings.ENDPOINT_URL, identifier, object_id),
-            headers=headers,
+        events.trigger('api.delete_object')
+        request = requests.delete(
+            '%s%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self.object_id),
             params=params,
         )
         if request.status_code in [400, 404]:
             raise DocumentNotFound(
-                "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (identifier, object_id)
+                "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (
+                    self.identifier,
+                    self.object_id,
+                )
             )
         elif request.status_code in [401, 403]:
             raise Unauthorized(
@@ -122,10 +180,112 @@ class NTBObject(object):
                     request.json()['message'],
                 )
             )
-        elif request.status_code == 304 and etag is not None:
-            return None
 
-        return request.headers, request.json()
+        if request.status_code != 204:
+            logger.warning("Turbasen returned status code %s on DELETE; expected 204" % request.status_code)
+
+        self.object_id = None
+        return request.headers
+
+
+    def _post(self):
+        params = {}
+        if Settings.API_KEY is not None:
+            params['api_key'] = Settings.API_KEY
+
+        events.trigger('api.post_object')
+        request = requests.post(
+            '%s%s' % (Settings.ENDPOINT_URL, self.identifier),
+            headers={'Content-Type': 'application/json; charset=utf-8'},
+            params=params,
+            # Note that we're not validating required fields, let the API handle that
+            data=json.dumps(self._get_data()),
+        )
+        if request.status_code in [400, 422]:
+            raise InvalidDocument(
+                "Turbasen returned status code %s with the message: \"%s\" and the following errors: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
+                    request.json().get('errors', ''),
+                )
+            )
+        elif request.status_code in [401, 403]:
+            raise Unauthorized(
+                "Turbasen returned status code %s with the message: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
+                )
+            )
+
+        if request.status_code != 201:
+            logger.warning("Turbasen returned status code %s on POST; expected 201" % request.status_code)
+
+        for warning in request.json().get('warnings', []):
+            logger.warning("Turbasen POST warning: %s" % warning)
+
+        return request.headers, request.json()['document']
+
+    @requires_object_id
+    def _put(self):
+        params = {}
+        if Settings.API_KEY is not None:
+            params['api_key'] = Settings.API_KEY
+
+        events.trigger('api.put_object')
+        request = requests.put(
+            '%s%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self.object_id),
+            headers={'Content-Type': 'application/json; charset=utf-8'},
+            params=params,
+            # Note that we're not validating required fields, let the API handle that
+            data=json.dumps(self._get_data()),
+        )
+        if request.status_code in [400, 422]:
+            raise InvalidDocument(
+                "Turbasen returned status code %s with the message: \"%s\" and the following errors: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
+                    request.json().get('errors', ''),
+                )
+            )
+        elif request.status_code in [401, 403]:
+            raise Unauthorized(
+                "Turbasen returned status code %s with the message: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
+                )
+            )
+        elif request.status_code == 404:
+            raise DocumentNotFound(
+                "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (
+                    self.identifier,
+                    self.object_id,
+                )
+            )
+
+        if request.status_code != 200:
+            logger.warning("Turbasen returned status code %s on PUT; expected 200" % request.status_code)
+
+        for warning in request.json().get('warnings', []):
+            logger.warning("Turbasen PUT warning: %s" % warning)
+
+        return request.headers, request.json()['document']
+
+    #
+    # Public static data retrieval methods
+    #
+
+    @classmethod
+    def get(cls, object_id):
+        """Retrieve a single object from Turbasen by its object id"""
+        object = Settings.CACHE.get('turbasen.object.%s' % object_id)
+        if object is None:
+            logger.debug("[get %s/%s]: Not in local cache, performing GET request..." % (cls.identifier, object_id))
+            headers, document = NTBObject._get_document(cls.identifier, object_id)
+            return cls(_meta={'id': document.pop('_id'), 'etag': headers['etag']}, **document)
+        else:
+            logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (cls.identifier, object_id))
+            object._refresh()
+            return object
 
     @classmethod
     def lookup(cls, pages=1):
@@ -143,6 +303,54 @@ class NTBObject(object):
         else:
             logger.debug("[lookup %s (pages=%s)]: Retrieved from cache" % (cls.identifier, pages))
         return objects
+
+    #
+    # Internal static data retrieval methods
+    #
+
+    @staticmethod
+    def _get_document(identifier, object_id, etag=None):
+        params = {}
+        if Settings.API_KEY is not None:
+            params['api_key'] = Settings.API_KEY
+
+        headers = {}
+        if etag is not None:
+            headers['if-none-match'] = etag
+
+        events.trigger('api.get_object')
+        request = requests.get(
+            '%s%s/%s' % (Settings.ENDPOINT_URL, identifier, object_id),
+            headers=headers,
+            params=params,
+        )
+        if request.status_code == 304 and etag is not None:
+            return None
+        elif request.status_code in [400, 404]:
+            raise DocumentNotFound(
+                "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (identifier, object_id)
+            )
+        elif request.status_code in [401, 403]:
+            raise Unauthorized(
+                "Turbasen returned status code %s with the message: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
+                )
+            )
+
+        if request.status_code != 200:
+            logger.warning("Turbasen returned status code %s on GET; expected 200" % request.status_code)
+
+        return request.headers, request.json()
+
+    #
+    # Internal utilities
+    #
+
+    @staticmethod
+    def _map_fieldnames(fields):
+        """Returns a dict mapping of field names from unicode to ascii"""
+        return {f: f.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a') for f in fields}
 
     class NTBIterator:
         """Document iterator"""
@@ -170,7 +378,10 @@ class NTBObject(object):
 
             self.document_index += 1
             document = self.document_list[self.document_index - 1]
-            return self.cls(id=document.pop('_id'), etag=document['checksum'], _is_partial=True, **document)
+            return self.cls(
+                _meta={'id': document.pop('_id'), 'etag': document['checksum'], 'is_partial': True},
+                **document
+            )
 
         def lookup_bulk(self):
             params = {
@@ -209,9 +420,6 @@ class NTBObject(object):
 class Gruppe(NTBObject):
     identifier = 'grupper'
     FIELDS = [
-        'navngiving',
-        'status',
-        'navn',
         'geojson',
         'områder',
         'kommuner',
@@ -230,42 +438,22 @@ class Gruppe(NTBObject):
         'steder',
         'url',
     ]
-
-    def __repr__(self):
-        repr = '<Gruppe: %s (%s)>' % (self.object_id, self.navn)
-        # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
-        # explicit checks grow out of hand, consider replacing them with six.
-        if sys.version_info.major == 2:
-            return repr.encode('utf-8')
-        else:
-            return repr
+    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
 
 class Omrade(NTBObject):
     identifier = 'områder'
     FIELDS = [
-        'navngiving',
-        'status',
         'geojson',
         'kommuner',
         'fylker',
         'beskrivelse',
         'bilder',
     ]
-
-    def __repr__(self):
-        repr = '<Område: %s (%s)>' % (self.object_id, self.navn)
-        # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
-        # explicit checks grow out of hand, consider replacing them with six.
-        if sys.version_info.major == 2:
-            return repr.encode('utf-8')
-        else:
-            return repr
+    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
 
 class Sted(NTBObject):
     identifier = 'steder'
     FIELDS = [
-        'navngiving',
-        'status',
         'navn_alt',
         'ssr_id',
         'geojson',
@@ -288,12 +476,4 @@ class Sted(NTBObject):
         'kart',
         'turkart',
     ]
-
-    def __repr__(self):
-        repr = '<Sted: %s (%s)>' % (self.object_id, self.navn)
-        # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
-        # explicit checks grow out of hand, consider replacing them with six.
-        if sys.version_info.major == 2:
-            return repr.encode('utf-8')
-        else:
-            return repr
+    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
