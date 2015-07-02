@@ -201,7 +201,6 @@ class NTBObject(object):
         self.object_id = None
         return request.headers
 
-
     def _post(self):
         params = {}
         if Settings.API_KEY is not None:
