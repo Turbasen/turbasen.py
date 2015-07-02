@@ -81,6 +81,14 @@ class NTBObject(object):
     # Internal data handling
     #
 
+    def get_data(self, include_common=True):
+        """Returns a dict of all data fields on this object. Set include_common to False to only return fields specific
+        to this datatype."""
+        field_names = [self.FIELD_MAP_UNICODE[f] for f in self.FIELDS]
+        if include_common:
+            field_names += self.COMMON_FIELDS
+        return {field: getattr(self, field) for field in field_names if hasattr(self, field)}
+
     def set_data(self, etag, **fields):
         """Save the given data on this object"""
         self._etag = etag
@@ -152,14 +160,12 @@ class NTBObject(object):
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
 
-        data = {field: getattr(self, self.FIELD_MAP_UNICODE[field]) for field in self.FIELDS}
-
         events.trigger('api.post_object')
         request = requests.post(
             '%s%s' % (Settings.ENDPOINT_URL, self.identifier),
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
-            data=json.dumps(data),
+            data=json.dumps(self.get_data()), # Note that we're not validating required fields, let the API handle that
         )
         if request.status_code in [400, 422]:
             raise InvalidDocument(
