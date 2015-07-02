@@ -30,6 +30,29 @@ def test_get_omrade(configure_dev):
     assert omrade.navn == 'Sørlandet'
 
 @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
+def test_post(configure_dev):
+    sted = turbasen.Sted(
+        lisens='Privat',
+        status='Kladd',
+        navn='Testhytta',
+        geojson={
+            'properties': {'altitude': -999}, 'type': 'Point', 'coordinates': [12.18104163626816, 60.368712513406365]
+        },
+        fylke='Testfylket',
+        beskrivelse='Testhytta er en opplevelse for seg selv',
+        tags=[],
+        bilder=[],
+    )
+    assert sted.object_id is None
+
+    # POST the object and see that we've now defined its object_id
+    sted.save()
+    assert sted.object_id is not None
+
+    # See that we can retrieve our POSTed data
+    assert sted.beskrivelse == turbasen.Sted.get(sted.object_id).beskrivelse
+
+@pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
 def test_refresh(configure_dev, no_etag_cache):
     sted = turbasen.Sted.get('52407fb375049e561500004e')
     etag = sted._etag
