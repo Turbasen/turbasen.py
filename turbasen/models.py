@@ -96,7 +96,11 @@ class NTBObject(object):
         field_names = [self.FIELD_MAP_UNICODE[f] for f in self.FIELDS]
         if include_common:
             field_names += self.COMMON_FIELDS
-        return {field: getattr(self, field) for field in field_names if hasattr(self, field)}
+        return {
+            field: getattr(self, field)
+            for field in field_names
+            if hasattr(self, field) and getattr(self, field) is not None
+        }
 
     def _set_data(self, etag, fields):
         """Save the given data on this object"""
