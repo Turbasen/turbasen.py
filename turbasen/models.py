@@ -155,6 +155,35 @@ class NTBObject(object):
         # and although all other fields are reset, they should return as they were.
         self._set_data(etag=document.pop('checksum'), fields=document)
 
+    @requires_object_id
+    def delete(self):
+        params = {}
+        if Settings.API_KEY is not None:
+            params['api_key'] = Settings.API_KEY
+
+        events.trigger('api.delete_object')
+        request = requests.delete(
+            '%s%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self.object_id),
+            params=params,
+        )
+        if request.status_code in [400, 404]:
+            raise DocumentNotFound(
+                "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (
+                    self.identifier,
+                    self.object_id,
+                )
+            )
+        elif request.status_code in [401, 403]:
+            raise Unauthorized(
+                "Turbasen returned status code %s with the message: \"%s\"" % (
+                    request.status_code,
+                    request.json()['message'],
+                )
+            )
+
+        return request.headers
+
+
     def _post(self):
         params = {}
         if Settings.API_KEY is not None:
