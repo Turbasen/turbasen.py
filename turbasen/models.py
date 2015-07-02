@@ -25,11 +25,11 @@ class NTBObject(object):
         'navn',
     ]
 
-    def __init__(self, id=None, etag=None, is_partial=False, **fields):
-        self.object_id = id
-        self._is_partial = is_partial
+    def __init__(self, _meta={}, **fields):
+        self.object_id = _meta.get('id')
+        self._is_partial = _meta.get('is_partial', False)
         self._extra = {}
-        self.set_data(etag, **fields)
+        self.set_data(_meta.get('etag'), fields)
 
     def __repr__(self):
         # Since repr may be called during an AttributeError, we have to avoid __getattr__ when seeing if object_id and
@@ -89,7 +89,7 @@ class NTBObject(object):
             field_names += self.COMMON_FIELDS
         return {field: getattr(self, field) for field in field_names if hasattr(self, field)}
 
-    def set_data(self, etag, **fields):
+    def set_data(self, etag, fields):
         """Save the given data on this object"""
         self._etag = etag
         self._saved = datetime.now()
@@ -116,7 +116,7 @@ class NTBObject(object):
     def fetch(self):
         """Retrieve this object's entire document unconditionally (does not use ETag)"""
         headers, document = NTBObject.get_document(self.identifier, self.object_id)
-        self.set_data(headers['etag'], **document)
+        self.set_data(etag=headers['etag'], fields=document)
 
     @requires_object_id
     def refresh(self):
@@ -138,7 +138,7 @@ class NTBObject(object):
         else:
             logger.debug("[refresh %s]: Document was modified, resetting fields..." % self.object_id)
             headers, document = result
-            self.set_data(headers['etag'], **document)
+            self.set_data(etag=headers['etag'], fields=document)
 
     #
     # Data push to Turbasen
@@ -153,7 +153,7 @@ class NTBObject(object):
 
         # Note that we're resetting all fields here. The main reason is to reset the etag and update metadata fields,
         # and although all other fields are reset, they should return as they were.
-        self.set_data(etag=document.pop('checksum'), **document)
+        self.set_data(etag=document.pop('checksum'), fields=document)
 
     def post(self):
         params = {}
@@ -199,7 +199,7 @@ class NTBObject(object):
         if object is None:
             logger.debug("[get %s/%s]: Not in local cache, performing GET request..." % (cls.identifier, object_id))
             headers, document = NTBObject.get_document(cls.identifier, object_id)
-            return cls(id=document.pop('_id'), etag=headers['etag'], **document)
+            return cls(_meta={'id': document.pop('_id'), 'etag': headers['etag']}, **document)
         else:
             logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (cls.identifier, object_id))
             object.refresh()
@@ -296,7 +296,10 @@ class NTBObject(object):
 
             self.document_index += 1
             document = self.document_list[self.document_index - 1]
-            return self.cls(id=document.pop('_id'), etag=document['checksum'], is_partial=True, **document)
+            return self.cls(
+                _meta={'id': document.pop('_id'), 'etag': document['checksum'], 'is_partial': True},
+                **document
+            )
 
         def lookup_bulk(self):
             params = {
