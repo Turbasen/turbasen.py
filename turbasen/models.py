@@ -264,11 +264,8 @@ class NTBObject(object):
 
     @staticmethod
     def _map_fieldnames(fields):
-        """Returns a tuple of dict mapping of field names unicode -> ascii, and ascii -> unicode"""
-        return (
-            {f: f.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a') for f in fields},
-            {f.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a'): f for f in fields},
-        )
+        """Returns a dict mapping of field names from unicode to ascii"""
+        return {f: f.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a') for f in fields}
 
     class NTBIterator:
         """Document iterator"""
@@ -356,7 +353,7 @@ class Gruppe(NTBObject):
         'steder',
         'url',
     ]
-    FIELD_MAP_UNICODE, FIELD_MAP_ASCII = NTBObject._map_fieldnames(FIELDS)
+    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
 
 class Omrade(NTBObject):
     identifier = 'områder'
@@ -367,7 +364,7 @@ class Omrade(NTBObject):
         'beskrivelse',
         'bilder',
     ]
-    FIELD_MAP_UNICODE, FIELD_MAP_ASCII = NTBObject._map_fieldnames(FIELDS)
+    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
 
 class Sted(NTBObject):
     identifier = 'steder'
@@ -394,4 +391,4 @@ class Sted(NTBObject):
         'kart',
         'turkart',
     ]
-    FIELD_MAP_UNICODE, FIELD_MAP_ASCII = NTBObject._map_fieldnames(FIELDS)
+    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
