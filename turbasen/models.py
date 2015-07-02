@@ -256,7 +256,7 @@ class NTBObject(object):
             )
 
         for warning in request.json().get('warnings', []):
-            logger.warning("Turbasen POST warning: %s" % warning)
+            logger.warning("Turbasen PUT warning: %s" % warning)
 
         return request.headers, request.json()['document']
 
