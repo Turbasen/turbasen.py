@@ -11,3 +11,6 @@ class DummyCache:
 
     def get(self, key):
         return None
+
+    def delete(self, key):
+        pass
