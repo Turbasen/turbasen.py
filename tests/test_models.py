@@ -56,7 +56,7 @@ def test_post(configure_dev):
 def test_refresh(configure_dev, no_etag_cache):
     sted = turbasen.Sted.get('52407fb375049e561500004e')
     etag = sted._etag
-    sted.refresh()
+    sted._refresh()
     assert etag == sted._etag
 
 @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")

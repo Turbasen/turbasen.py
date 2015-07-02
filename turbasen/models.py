@@ -29,7 +29,7 @@ class NTBObject(object):
         self.object_id = _meta.get('id')
         self._is_partial = _meta.get('is_partial', False)
         self._extra = {}
-        self.set_data(_meta.get('etag'), fields)
+        self._set_data(_meta.get('etag'), fields)
 
     def __repr__(self):
         # Since repr may be called during an AttributeError, we have to avoid __getattr__ when seeing if object_id and
@@ -70,7 +70,7 @@ class NTBObject(object):
                 self.object_id,
                 name,
             ))
-            self.fetch()
+            self._fetch()
             self._is_partial = False
             return getattr(self, name)
         else:
@@ -81,7 +81,7 @@ class NTBObject(object):
     # Internal data handling
     #
 
-    def get_data(self, include_common=True):
+    def _get_data(self, include_common=True):
         """Returns a dict of all data fields on this object. Set include_common to False to only return fields specific
         to this datatype."""
         field_names = [self.FIELD_MAP_UNICODE[f] for f in self.FIELDS]
@@ -89,7 +89,7 @@ class NTBObject(object):
             field_names += self.COMMON_FIELDS
         return {field: getattr(self, field) for field in field_names if hasattr(self, field)}
 
-    def set_data(self, etag, fields):
+    def _set_data(self, etag, fields):
         """Save the given data on this object"""
         self._etag = etag
         self._saved = datetime.now()
@@ -113,13 +113,13 @@ class NTBObject(object):
     #
 
     @requires_object_id
-    def fetch(self):
+    def _fetch(self):
         """Retrieve this object's entire document unconditionally (does not use ETag)"""
-        headers, document = NTBObject.get_document(self.identifier, self.object_id)
-        self.set_data(etag=headers['etag'], fields=document)
+        headers, document = NTBObject._get_document(self.identifier, self.object_id)
+        self._set_data(etag=headers['etag'], fields=document)
 
     @requires_object_id
-    def refresh(self):
+    def _refresh(self):
         """If the object is expired, refetch it (using the local ETag)"""
         if self._etag is not None and self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
             logger.debug("[refresh %s]: Object is younger than ETag cache period (%s), skipping ETag check" % (
@@ -129,7 +129,7 @@ class NTBObject(object):
             return
 
         logger.debug("[refresh %s]: ETag cache period expired, performing request..." % self.object_id)
-        result = NTBObject.get_document(self.identifier, self.object_id, self._etag)
+        result = NTBObject._get_document(self.identifier, self.object_id, self._etag)
         if result is None:
             # Document is not modified, reset the etag check timeout
             logger.debug("[refresh %s]: Document was not modified" % self.object_id)
@@ -138,7 +138,7 @@ class NTBObject(object):
         else:
             logger.debug("[refresh %s]: Document was modified, resetting fields..." % self.object_id)
             headers, document = result
-            self.set_data(etag=headers['etag'], fields=document)
+            self._set_data(etag=headers['etag'], fields=document)
 
     #
     # Data push to Turbasen
@@ -146,16 +146,16 @@ class NTBObject(object):
 
     def save(self):
         if self.object_id:
-            headers, document = self.put()
+            headers, document = self._put()
         else:
-            headers, document = self.post()
+            headers, document = self._post()
             self.object_id = document['_id']
 
         # Note that we're resetting all fields here. The main reason is to reset the etag and update metadata fields,
         # and although all other fields are reset, they should return as they were.
-        self.set_data(etag=document.pop('checksum'), fields=document)
+        self._set_data(etag=document.pop('checksum'), fields=document)
 
-    def post(self):
+    def _post(self):
         params = {}
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
@@ -165,7 +165,8 @@ class NTBObject(object):
             '%s%s' % (Settings.ENDPOINT_URL, self.identifier),
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
-            data=json.dumps(self.get_data()), # Note that we're not validating required fields, let the API handle that
+            # Note that we're not validating required fields, let the API handle that
+            data=json.dumps(self._get_data()),
         )
         if request.status_code in [400, 422]:
             raise InvalidDocument(
@@ -198,11 +199,11 @@ class NTBObject(object):
         object = Settings.CACHE.get('turbasen.object.%s' % object_id)
         if object is None:
             logger.debug("[get %s/%s]: Not in local cache, performing GET request..." % (cls.identifier, object_id))
-            headers, document = NTBObject.get_document(cls.identifier, object_id)
+            headers, document = NTBObject._get_document(cls.identifier, object_id)
             return cls(_meta={'id': document.pop('_id'), 'etag': headers['etag']}, **document)
         else:
             logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (cls.identifier, object_id))
-            object.refresh()
+            object._refresh()
             return object
 
     @classmethod
@@ -227,7 +228,7 @@ class NTBObject(object):
     #
 
     @staticmethod
-    def get_document(identifier, object_id, etag=None):
+    def _get_document(identifier, object_id, etag=None):
         params = {}
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
