@@ -53,6 +53,28 @@ def test_post(configure_dev):
     assert sted.beskrivelse == turbasen.Sted.get(sted.object_id).beskrivelse
 
 @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
+def test_put(configure_dev):
+    sted = turbasen.Sted.get('52407fb375049e561500004e')
+
+    # Change some data
+    navn_original = sted.navn
+    navn_reversed = sted.navn[::-1]
+    assert navn_reversed != sted.navn
+
+    # PUT the object with the new data
+    sted.navn = navn_reversed
+    sted.save()
+
+    # See that we can retrieve our changed data
+    sted = turbasen.Sted.get('52407fb375049e561500004e')
+    assert navn_original != sted.navn
+    assert navn_reversed == sted.navn
+
+    # Reset the name, just in case
+    sted.navn = navn_original
+    sted.save()
+
+@pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
 def test_refresh(configure_dev, no_etag_cache):
     sted = turbasen.Sted.get('52407fb375049e561500004e')
     etag = sted._etag
