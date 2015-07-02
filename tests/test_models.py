@@ -75,6 +75,33 @@ def test_put(configure_dev):
     sted.save()
 
 @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
+def test_delete(configure_dev):
+    sted = turbasen.Sted(
+        lisens='Privat',
+        status='Kladd',
+        navn='Testhytta',
+        geojson={
+            'properties': {'altitude': -999}, 'type': 'Point', 'coordinates': [12.18104163626816, 60.368712513406365]
+        },
+        fylke='Testfylket',
+        beskrivelse='Testhytta er en opplevelse for seg selv',
+        tags=[],
+        bilder=[],
+    )
+    assert sted.object_id is None
+
+    # POST the object and see that we've now defined its object_id
+    sted.save()
+    object_id = sted.object_id
+    assert sted.object_id is not None
+
+    # See that we can delete it
+    sted.delete()
+    assert sted.object_id is None
+    with pytest.raises(turbasen.exceptions.DocumentNotFound):
+        turbasen.Sted.get(object_id)
+
+@pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
 def test_refresh(configure_dev, no_etag_cache):
     sted = turbasen.Sted.get('52407fb375049e561500004e')
     etag = sted._etag
