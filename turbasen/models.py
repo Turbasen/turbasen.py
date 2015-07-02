@@ -136,7 +136,6 @@ class NTBObject(object):
     # Data push to Turbasen
     #
 
-    @requires_object_id
     def save(self):
         if self.object_id:
             headers, document = self.put()
@@ -148,7 +147,6 @@ class NTBObject(object):
         # and although all other fields are reset, they should return as they were.
         self.set_data(etag=document.pop('checksum'), **document)
 
-    @requires_object_id
     def post(self):
         params = {}
         if Settings.API_KEY is not None:
