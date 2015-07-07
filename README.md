@@ -10,13 +10,13 @@ Python client for [Nasjonal Turbase](http://www.nasjonalturbase.no/)
 
 ## Usage
 
-turbasen.py implements the following datatypes:
+turbasen.py implements the following datatypes; import them from the `turbasen` module:
 
 * `Gruppe`
 * `Omrade`
 * `Sted`
 
-Import them from the `turbasen` module.
+turbasen.py is opinionated about available data fields, see the `FIELDS` attribute on each data type in [the models](https://github.com/Turbasen/turbasen.py/blob/master/turbasen/models.py). Retrieving an object with unrecognized fields and saving it will delete those fields by default.
 
 ### Static methods
 
@@ -30,9 +30,13 @@ Retrieve the entire document for the object with the given ID.
 
 ### Instance methods
 
-`def save()`
+`def save(include_extra=False)`
 
-Save the object by performing a `POST` if the object is new (has no object id) or a `PUT` if it's an existing object.
+Save the object by performing a `POST` if the object is new (has no object id) or a `PUT` if it's an existing object. Existing data fields not recognized in our data model will be cleared on save (by not including them in the `PUT` request) unless you set `include_extra` to `True`.
+
+`def get_data(self, include_common=True, include_extra=True)`
+
+Returns a dict of all data fields on this object. Set `include_common` to `False` to only return fields specific to this datatype. Set `include_extra` to `False` to exclude fields not recognized in our data model.
 
 ## Example
 
@@ -95,6 +99,8 @@ def my_handler():
 turbasen.handle_event('api.get_object', my_handler)
 ```
 
-* `api.get_object`: Triggered whenever a GET request is made to retrieve a single object the REST API.
-* `api.get_objects`: Triggered whenever a GET request is made to retrieve a list of objects from the REST API.
-* `api.post_object`: Triggered whenever an object is POSTed to the REST API.
+* `api.get_object`: GET request made for a single object
+* `api.get_objects`: GET request for a new page with list of objects - called once for each new page
+* `api.post_object`: POST request made with a new object
+* `api.put_object`: PUT request made for an existing object
+* `api.delete_object`: DELETE request made for an existing object
