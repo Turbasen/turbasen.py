@@ -177,7 +177,7 @@ class NTBObject(object):
 
         events.trigger('api.delete_object')
         request = requests.delete(
-            '%s%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self.object_id),
+            '%s/%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self.object_id),
             params=params,
         )
         if request.status_code in [400, 404]:
@@ -209,7 +209,7 @@ class NTBObject(object):
 
         events.trigger('api.post_object')
         request = requests.post(
-            '%s%s' % (Settings.ENDPOINT_URL, self.identifier),
+            '%s/%s' % (Settings.ENDPOINT_URL, self.identifier),
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
             # Note that we're not validating required fields, let the API handle that
@@ -247,7 +247,7 @@ class NTBObject(object):
 
         events.trigger('api.put_object')
         request = requests.put(
-            '%s%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self.object_id),
+            '%s/%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self.object_id),
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
             # Note that we're not validating required fields, let the API handle that
@@ -334,7 +334,7 @@ class NTBObject(object):
 
         events.trigger('api.get_object')
         request = requests.get(
-            '%s%s/%s' % (Settings.ENDPOINT_URL, identifier, object_id),
+            '%s/%s/%s' % (Settings.ENDPOINT_URL, identifier, object_id),
             headers=headers,
             params=params,
         )
@@ -410,7 +410,7 @@ class NTBObject(object):
                 params['api_key'] = Settings.API_KEY
 
             events.trigger('api.get_objects')
-            request = requests.get('%s%s' % (Settings.ENDPOINT_URL, self.cls.identifier), params=params)
+            request = requests.get('%s/%s' % (Settings.ENDPOINT_URL, self.cls.identifier), params=params)
             if request.status_code in [401, 403]:
                 raise Unauthorized(
                     "Turbasen returned status code %s with the message: \"%s\"" % (

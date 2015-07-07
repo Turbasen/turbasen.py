@@ -7,7 +7,7 @@ import turbasen
 
 @pytest.fixture
 def configure_dev():
-    turbasen.configure(ENDPOINT_URL='http://dev.nasjonalturbase.no/')
+    turbasen.configure(ENDPOINT_URL='http://dev.nasjonalturbase.no')
 
 @pytest.fixture
 def no_etag_cache():

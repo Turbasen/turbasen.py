@@ -6,7 +6,7 @@ import os
 from .cache import DummyCache
 
 class Settings:
-    ENDPOINT_URL = 'http://api.nasjonalturbase.no/'
+    ENDPOINT_URL = 'http://api.nasjonalturbase.no'
     LIMIT = 20
     CACHE = DummyCache()
     CACHE_LOOKUP_PERIOD = 60 * 60 * 24
@@ -16,4 +16,8 @@ class Settings:
 
 def configure(**settings):
     for key, value in settings.items():
+        # Strip any trailing slash in ENDPOINT_URL
+        if key == 'ENDPOINT_URL':
+            value = value.rstrip('/')
+
         setattr(Settings, key, value)
