@@ -138,6 +138,11 @@ class NTBObject(object):
         """Retrieve this object's entire document unconditionally (does not use ETag)"""
         headers, document = NTBObject._get_document(self.identifier, self.object_id)
         object_id = document.pop('_id')
+        if object_id != self.object_id:
+            raise InvalidDocument("Fetch for object '%s' returned a different object id; '%s'" % (
+                self.object_id,
+                object_id,
+            ))
         self._set_data(etag=headers['etag'], fields=document)
 
     @requires_object_id
