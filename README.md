@@ -16,7 +16,7 @@ turbasen.py implements the following datatypes; import them from the `turbasen` 
 * `Omrade`
 * `Sted`
 
-turbasen.py is opinionated about available data fields, see the `FIELDS` attribute on each data type in [the models](https://github.com/Turbasen/turbasen.py/blob/master/turbasen/models.py). Retrieving an object with unrecognized fields and saving it will delete those fields by default.
+turbasen.py is opinionated about available data fields, see the `FIELDS` attribute on each data type in [the models](https://github.com/Turbasen/turbasen.py/blob/master/turbasen/models.py). Retrieving an object with unrecognized fields and saving it will delete those fields by default. Fields with value `None` are regarded as undefined.
 
 ### Static methods
 
