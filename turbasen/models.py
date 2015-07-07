@@ -94,7 +94,7 @@ class NTBObject(object):
     # Internal data handling
     #
 
-    def _get_data(self, include_common=True, include_extra=True):
+    def get_data(self, include_common=True, include_extra=True):
         """Returns a dict of all data fields on this object. Set include_common to False to only return fields specific
         to this datatype. Set include_extra to False to exclude fields not recognized in our data model."""
         field_names = [self.FIELD_MAP_UNICODE[f] for f in self.FIELDS]
@@ -220,7 +220,7 @@ class NTBObject(object):
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
             # Note that we're not validating required fields, let the API handle that
-            data=json.dumps(self._get_data(include_extra=include_extra)),
+            data=json.dumps(self.get_data(include_extra=include_extra)),
         )
         if request.status_code in [400, 422]:
             raise InvalidDocument(
@@ -258,7 +258,7 @@ class NTBObject(object):
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
             # Note that we're not validating required fields, let the API handle that
-            data=json.dumps(self._get_data(include_extra=include_extra)),
+            data=json.dumps(self.get_data(include_extra=include_extra)),
         )
         if request.status_code in [400, 422]:
             raise InvalidDocument(
