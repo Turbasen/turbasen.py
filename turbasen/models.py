@@ -165,11 +165,11 @@ class NTBObject(object):
     # Data push to Turbasen
     #
 
-    def save(self):
+    def save(self, include_extra=False):
         if self.object_id:
-            headers, document = self._put()
+            headers, document = self._put(include_extra=include_extra)
         else:
-            headers, document = self._post()
+            headers, document = self._post(include_extra=include_extra)
             self.object_id = document['_id']
 
         # Note that we're resetting all fields here. The main reason is to reset the etag and update metadata fields,
@@ -209,7 +209,7 @@ class NTBObject(object):
         self.object_id = None
         return request.headers
 
-    def _post(self):
+    def _post(self, include_extra=False):
         params = {}
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
@@ -220,7 +220,7 @@ class NTBObject(object):
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
             # Note that we're not validating required fields, let the API handle that
-            data=json.dumps(self._get_data()),
+            data=json.dumps(self._get_data(include_extra=include_extra)),
         )
         if request.status_code in [400, 422]:
             raise InvalidDocument(
@@ -247,7 +247,7 @@ class NTBObject(object):
         return request.headers, request.json()['document']
 
     @requires_object_id
-    def _put(self):
+    def _put(self, include_extra=False):
         params = {}
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
@@ -258,7 +258,7 @@ class NTBObject(object):
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
             # Note that we're not validating required fields, let the API handle that
-            data=json.dumps(self._get_data()),
+            data=json.dumps(self._get_data(include_extra=include_extra)),
         )
         if request.status_code in [400, 422]:
             raise InvalidDocument(
