@@ -26,6 +26,7 @@ class NTBObject(object):
     COMMON_FIELDS_READONLY = [
         'tilbyder',
         'endret',
+        'checksum',
     ]
 
     def __init__(self, _meta={}, **fields):
