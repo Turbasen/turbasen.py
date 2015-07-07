@@ -34,9 +34,9 @@ Retrieve the entire document for the object with the given ID.
 
 Save the object by performing a `POST` if the object is new (has no object id) or a `PUT` if it's an existing object. Existing data fields not recognized in our data model will be cleared on save (by not including them in the `PUT` request) unless you set `include_extra` to `True`.
 
-`def get_data(self, include_common=True, include_extra=True)`
+`def get_data(self, include_common=True, include_extra=False)`
 
-Returns a dict of all data fields on this object. Set `include_common` to `False` to only return fields specific to this datatype. Set `include_extra` to `False` to exclude fields not recognized in our data model.
+Returns a dict of all data fields on this object. Set `include_common` to `False` to only return fields specific to this datatype. Set `include_extra` to `True` to include fields not recognized in our data model.
 
 ## Example
 

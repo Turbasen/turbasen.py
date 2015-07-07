@@ -94,7 +94,7 @@ class NTBObject(object):
     # Internal data handling
     #
 
-    def get_data(self, include_common=True, include_extra=True):
+    def get_data(self, include_common=True, include_extra=False):
         """Returns a dict of all data fields on this object. Set include_common to False to only return fields specific
         to this datatype. Set include_extra to False to exclude fields not recognized in our data model."""
         field_names = [self.FIELD_MAP_UNICODE[f] for f in self.FIELDS]
