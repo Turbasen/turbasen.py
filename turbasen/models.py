@@ -171,7 +171,7 @@ class NTBObject(object):
 
         # Note that we're resetting all fields here. The main reason is to reset the etag and update metadata fields,
         # and although all other fields are reset, they should return as they were.
-        self._set_data(etag=document.pop('checksum'), fields=document)
+        self._set_data(etag=document['checksum'], fields=document)
 
     @requires_object_id
     def delete(self):
