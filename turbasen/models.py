@@ -17,12 +17,15 @@ logger = logging.getLogger('turbasen')
 
 class NTBObject(object):
     COMMON_FIELDS = [
-        'tilbyder',
-        'endret',
         'lisens',
         'navngiving',
         'status',
         'navn',
+    ]
+
+    COMMON_FIELDS_READONLY = [
+        'tilbyder',
+        'endret',
     ]
 
     def __init__(self, _meta={}, **fields):
@@ -111,7 +114,7 @@ class NTBObject(object):
             if key in self.FIELDS:
                 # Expected data fields
                 setattr(self, self.FIELD_MAP_UNICODE.get(key, key), value)
-            elif key in NTBObject.COMMON_FIELDS:
+            elif key in NTBObject.COMMON_FIELDS + NTBObject.COMMON_FIELDS_READONLY:
                 # Expected common metadata
                 setattr(self, key, value)
             else:
