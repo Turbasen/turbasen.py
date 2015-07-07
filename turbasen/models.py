@@ -98,7 +98,7 @@ class NTBObject(object):
         to this datatype."""
         field_names = [self.FIELD_MAP_UNICODE[f] for f in self.FIELDS]
         if include_common:
-            field_names += self.COMMON_FIELDS
+            field_names += NTBObject.COMMON_FIELDS
         return {
             field: getattr(self, field)
             for field in field_names
