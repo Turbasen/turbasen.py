@@ -460,7 +460,7 @@ class Gruppe(NTBObject):
         'tags',
         'foreldregruppe',
         'privat',
-        'grupper'
+        'grupper',
         'bilder',
         'steder',
         'url',
