@@ -114,3 +114,12 @@ def test_lookup(configure_dev):
     result_list = list(results)
     assert len(result_list) == turbasen.settings.Settings.LIMIT * 2
     assert result_list[0].object_id != ''
+
+@pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
+def test_extra(configure_dev):
+    sted = turbasen.Sted(navn='Heia', foo_bar=42)
+    assert hasattr(sted, 'navn')
+    assert not hasattr(sted, 'foo_bar')
+    assert 'foo_bar' in sted._extra
+    assert 'foo_bar' in sted.get_data(include_extra=True)
+    assert 'foo_bar' not in sted.get_data(include_extra=False)
