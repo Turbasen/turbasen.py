@@ -10,7 +10,7 @@ import requests
 
 from .settings import Settings
 from .exceptions import DocumentNotFound, Unauthorized, InvalidDocument
-from .decorators import requires_object_id
+from .decorators import requires_object_id, requires_not_partial
 from . import events
 
 logger = logging.getLogger('turbasen')
@@ -179,6 +179,7 @@ class NTBObject(object):
     # Data push to Turbasen
     #
 
+    @requires_not_partial
     def save(self, include_extra=False):
         if self.object_id:
             headers, document = self._put(include_extra=include_extra)
@@ -223,6 +224,7 @@ class NTBObject(object):
         self.object_id = None
         return request.headers
 
+    @requires_not_partial
     def _post(self, include_extra=False):
         params = {}
         if Settings.API_KEY is not None:
@@ -261,6 +263,7 @@ class NTBObject(object):
         return request.headers, request.json()['document']
 
     @requires_object_id
+    @requires_not_partial
     def _put(self, include_extra=False):
         params = {}
         if Settings.API_KEY is not None:
