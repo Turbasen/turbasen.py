@@ -88,7 +88,15 @@ class NTBObject(object):
             return getattr(self, name)
         else:
             # Default behavior - no such attribute
-            raise AttributeError("'%s' object has no attribute '%s'" % (self, name))
+            # Manual py2/3 compatibility handling for encoding exception message
+            if sys.version_info.major == 2:
+                error_message = ("'%s' object has no attribute '%s'" % (
+                    repr(self).decode('utf-8'),
+                    name,
+                )).encode('utf-8')
+            else:
+                error_message = "'%s' object has no attribute '%s'" % (self, name)
+            raise AttributeError(error_message)
 
     #
     # Internal data handling
