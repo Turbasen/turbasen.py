@@ -323,6 +323,12 @@ class NTBObject(object):
         else:
             logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (cls.identifier, object_id))
             object._refresh()
+            if object._is_partial:
+                logger.debug("[get %s/%s]: Cached object is partial; fetching entire object..." % (
+                    cls.identifier,
+                    object_id,
+                ))
+                object._fetch()
             return object
 
     @classmethod
