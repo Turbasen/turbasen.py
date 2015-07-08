@@ -50,7 +50,7 @@ class NTBObject(object):
         except AttributeError:
             navn = '?'
 
-        repr = '<%s: %s (%s)>' % (self.__class__.__name__, object_id, navn)
+        repr = '<%s: %s%s: %s>' % (self.__class__.__name__, object_id, ' (partial)' if self._is_partial else '', navn)
 
         # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
         # explicit checks grow out of hand, consider replacing them with six.
