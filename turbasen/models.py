@@ -150,8 +150,8 @@ class NTBObject(object):
     def _fetch(self):
         """Retrieve this object's entire document unconditionally (does not use ETag)"""
         headers, document = NTBObject._get_document(self.identifier, self.object_id)
-        self._set_data(etag=headers['etag'], fields=document)
         self._is_partial = False
+        self._set_data(etag=headers['etag'], fields=document)
 
     @requires_object_id
     def _refresh(self):
