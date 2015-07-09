@@ -189,7 +189,7 @@ class NTBObject(object):
 
         # Note that we're resetting all fields here. The main reason is to reset the etag and update metadata fields,
         # and although all other fields are reset, they should return as they were.
-        self._set_data(etag=document['checksum'], fields=document)
+        self._set_data(etag="\"%s\"" % document['checksum'], fields=document)
 
     @requires_object_id
     def delete(self):
@@ -423,7 +423,7 @@ class NTBObject(object):
             self.document_index += 1
             document = self.document_list[self.document_index - 1]
             return self.cls(
-                _meta={'id': document.pop('_id'), 'etag': document['checksum'], 'is_partial': True},
+                _meta={'id': document.pop('_id'), 'etag': "\"%s\"" % document['checksum'], 'is_partial': True},
                 **document
             )
 
