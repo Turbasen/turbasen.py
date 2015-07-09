@@ -155,7 +155,12 @@ class NTBObject(object):
 
     @requires_object_id
     def _refresh(self):
-        """Refreshes the object if the ETag cache period is expired and the object is modified"""
+        """Refreshes the object if the ETag cache period is expired and the object is modified. If called with a
+        partial object, that object will be fetched unconditionally, without using its ETag."""
+        if self._is_partial:
+            self._fetch()
+            return
+
         if self._etag is not None and self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
             logger.debug("[refresh %s]: Object is younger than ETag cache period (%s), skipping ETag check" % (
                 self.object_id,
@@ -323,12 +328,6 @@ class NTBObject(object):
         else:
             logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (cls.identifier, object_id))
             object._refresh()
-            if object._is_partial:
-                logger.debug("[get %s/%s]: Cached object is partial; fetching entire object..." % (
-                    cls.identifier,
-                    object_id,
-                ))
-                object._fetch()
             return object
 
     @classmethod
