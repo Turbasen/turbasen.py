@@ -155,7 +155,7 @@ class NTBObject(object):
 
     @requires_object_id
     def _refresh(self):
-        """If the object is expired, refetch it (using the local ETag)"""
+        """Refreshes the object if the ETag cache period is expired and the object is modified"""
         if self._etag is not None and self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
             logger.debug("[refresh %s]: Object is younger than ETag cache period (%s), skipping ETag check" % (
                 self.object_id,
