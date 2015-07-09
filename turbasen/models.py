@@ -122,6 +122,12 @@ class NTBObject(object):
         self._etag = etag
         self._saved = datetime.now()
 
+        if '_id' in fields:
+            new_object_id = fields.pop('_id')
+            if self.object_id is not None and self.object_id != new_object_id:
+                logger.warning("Replacing old object id '%s' with new object id '%s'" % (self.object_id, new_object_id))
+            self.object_id = new_object_id
+
         for key, value in fields.items():
             if key in self.FIELDS:
                 # Expected data fields
@@ -145,7 +151,6 @@ class NTBObject(object):
     def _fetch(self):
         """Retrieve this object's entire document unconditionally (does not use ETag)"""
         headers, document = NTBObject._get_document(self.identifier, self.object_id)
-        document.pop('_id')
         self._set_data(etag=headers['etag'], fields=document)
 
     @requires_object_id
@@ -180,7 +185,7 @@ class NTBObject(object):
             headers, document = self._put(include_extra=include_extra)
         else:
             headers, document = self._post(include_extra=include_extra)
-            self.object_id = document['_id']
+            self.object_id = document.pop('_id')
 
         # Note that we're resetting all fields here. The main reason is to reset the etag and update metadata fields,
         # and although all other fields are reset, they should return as they were.
