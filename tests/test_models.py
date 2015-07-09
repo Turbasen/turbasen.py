@@ -146,3 +146,16 @@ class TestClass:
         assert 'foo_bar' in sted._extra
         assert 'foo_bar' in sted.get_data(include_extra=True)
         assert 'foo_bar' not in sted.get_data(include_extra=False)
+
+    @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
+    def test_fetch_partial_object(self, configure_dev, object_manager, post_managed_sted):
+        sted = turbasen.Sted(
+            _meta={
+                'id': object_manager.sted.object_id,
+                'is_partial': True,
+            },
+            navn='Partial',
+        )
+        assert sted._is_partial
+        sted._fetch()
+        assert not sted._is_partial
