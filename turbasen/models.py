@@ -353,6 +353,10 @@ class NTBObject(object):
 
     @staticmethod
     def _get_document(identifier, object_id, etag=None):
+        # Handle the special case of empty object_id provided; the resulting request would have returned a list lookup
+        if object_id == '':
+            raise DocumentNotFound("No documents have an empty object id")
+
         params = {}
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
