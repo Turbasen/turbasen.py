@@ -78,6 +78,10 @@ class TestClass:
         omrade = turbasen.Omrade.get(object_manager.omrade.object_id)
         assert omrade.navn == 'Testområde'
 
+    def test_get_empty_object_id(self, configure_dev):
+        with pytest.raises(turbasen.exceptions.DocumentNotFound):
+            turbasen.Sted.get('')
+
     @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
     def test_post(self, configure_dev, object_manager):
         sted = object_manager.sted
