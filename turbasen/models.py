@@ -436,19 +436,11 @@ class NTBObject(object):
     class NTBIterator:
         """Document iterator"""
         DEFAULT_FIELDS = ['navn', 'checksum', 'endret', 'status'] # Include checksum (etag)
-        DEFAULT_PARAMS = {
-            'limit': Settings.LIMIT,
-            'status': 'Offentlig',  # Ignore Kladd, Privat, og Slettet
-            'tilbyder': 'DNT',      # Future proofing, there might be other objects
-        }
 
         def __init__(self, cls, pages, params):
             self.cls = cls
             self.pages = pages
-
-            # Add user-specified params, but overwrite any duplicates of our defaults
             self.params = params
-            self.params.update(self.DEFAULT_PARAMS)
 
             # Combine and add user-specified and default fields
             fields = set(self.DEFAULT_FIELDS + self.params.get('fields', []))
@@ -481,6 +473,11 @@ class NTBObject(object):
 
         def lookup_bulk(self):
             params = self.params
+
+            # Set our default params, overwriting any duplicates
+            params['limit'] = Settings.LIMIT,
+            params['status'] = 'Offentlig',  # Ignore Kladd, Privat, og Slettet
+            params['tilbyder'] = 'DNT',      # Future proofing, there might be other objects
             params['skip'] = self.bulk_index
 
             if Settings.API_KEY is not None:
