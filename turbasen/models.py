@@ -360,11 +360,17 @@ class NTBObject(object):
         """
         params = params.copy()
 
-        # Ensure that the 'fields' parameter is a list
+        # If the 'fields' parameter contains a single value, wrap it in a list
         if 'fields' in params and type(params['fields']) != list:
             params['fields'] = [params['fields']]
 
-        params_key = hash(frozenset(params.items()))
+        # Create a cache key with the dict's hash. Ensure the 'fields' iterable is a tuple, which is hashable. Use a
+        # copy to avoid mutating the original dict, where we prefer to keep the unhashable list.
+        params_copy = params.copy()
+        if 'fields' in params_copy:
+            params_copy['fields'] = tuple(params_copy['fields'])
+        params_key = hash(frozenset(params_copy.items()))
+
         objects = Settings.CACHE.get('turbasen.objects.%s.%s.%s' % (cls.identifier, pages, params_key))
         if objects is None:
             logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (cls.identifier, pages))
