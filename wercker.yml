@@ -27,8 +27,9 @@ build:
     #     name: setup virtual environment
     #     python_location: /usr/bin/python3.2
 
-    # A step that executes `pip install` command.
-    - pip-install
+    - script:
+      name: install package with requirements
+      code: pip install -e .\[dev\]
 
     # # This pip-install clears the local wheel cache
     # - pip-install:
