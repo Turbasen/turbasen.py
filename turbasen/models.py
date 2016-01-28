@@ -358,12 +358,17 @@ class NTBObject(object):
             Add API filter parameters. Note the special parameter 'fields' which can be used to include more fields in
             the partial objects. Note also that the following params will not be included: 'limit', 'status', 'tilbyder'
         """
-        objects = Settings.CACHE.get('turbasen.objects.%s.%s' % (cls.identifier, pages))
-        if objects is None:
-            # Ensure that the 'fields' parameter is a list
-            if 'fields' in params and type(params['fields']) != list:
-                params['fields'] = [params['fields']]
+        # Ensure that the 'fields' parameter is a list
+        if 'fields' in params and type(params['fields']) != list:
+            params['fields'] = [params['fields']]
 
+        # Create a deterministic cache key for the given parameters
+        params_pairs = sorted(params.items(), key=lambda i: i[0])
+        params_list = ["%s=%s" % (i[0], i[1]) for i in params_pairs]
+        params_key = '&'.join(params_list).encode('utf-8')
+
+        objects = Settings.CACHE.get('turbasen.objects.%s.%s.%s' % (cls.identifier, pages, params_key))
+        if objects is None:
             logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (cls.identifier, pages))
             objects = list(NTBObject.NTBIterator(cls, pages, params))
             Settings.CACHE.set(
