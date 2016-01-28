@@ -347,7 +347,7 @@ class NTBObject(object):
             return object
 
     @classmethod
-    def lookup(cls, pages=None, params={}):
+    def lookup(cls, pages=None, params=dict()):
         """
         Retrieve a complete list of these objects, partially fetched.
         Arguments:
@@ -358,6 +358,8 @@ class NTBObject(object):
             Add API filter parameters. Note the special parameter 'fields' which can be used to include more fields in
             the partial objects. Note also that the following params will not be included: 'limit', 'status', 'tilbyder'
         """
+        params = params.copy()
+
         # Ensure that the 'fields' parameter is a list
         if 'fields' in params and type(params['fields']) != list:
             params['fields'] = [params['fields']]
