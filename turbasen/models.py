@@ -370,16 +370,13 @@ class NTBObject(object):
         if 'fields' in params_copy:
             params_copy['fields'] = tuple(params_copy['fields'])
         params_key = hash(frozenset(params_copy.items()))
+        cache_key = 'turbasen.objects.%s.%s.%s' % (cls.identifier, pages, params_key)
 
-        objects = Settings.CACHE.get('turbasen.objects.%s.%s.%s' % (cls.identifier, pages, params_key))
+        objects = Settings.CACHE.get(cache_key)
         if objects is None:
             logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (cls.identifier, pages))
             objects = list(NTBObject.NTBIterator(cls, pages, params))
-            Settings.CACHE.set(
-                'turbasen.objects.%s.%s' % (cls.identifier, pages),
-                objects,
-                Settings.CACHE_LOOKUP_PERIOD,
-            )
+            Settings.CACHE.set(cache_key, objects, Settings.CACHE_LOOKUP_PERIOD)
         else:
             logger.debug("[lookup %s (pages=%s)]: Retrieved from cache" % (cls.identifier, pages))
         return objects
