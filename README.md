@@ -22,7 +22,7 @@ turbasen.py is opinionated about available data fields, see the `FIELDS` attribu
 
 `def lookup(pages=1)`
 
-Retrieve a list of partial objects. Set `pages` to the number of pages you want returned, or `None` to return all objects (might take a while). `settings.LIMIT` objects are returned per page.
+Retrieve a list of all partial objects of this type. Limit the amount of objects returned by specifying `pages`. A page contains `settings.LIMIT` objects.
 
 `def get(object_id)`
 

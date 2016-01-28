@@ -347,10 +347,10 @@ class NTBObject(object):
             return object
 
     @classmethod
-    def lookup(cls, pages=1):
+    def lookup(cls, pages=None):
         """
-        Retrieve a complete list of these objects, partially fetched. Specify how many pages you want retrieved
-        (result count in a page is configured with LIMIT), or set to None to retrieve all documents.
+        Retrieve a complete list of these objects, partially fetched. Specify `pages` to limit the amount of pages
+        iterated. `settings.LIMIT` decides the amount of objects per page.
         """
         objects = Settings.CACHE.get('turbasen.objects.%s.%s' % (cls.identifier, pages))
         if objects is None:
