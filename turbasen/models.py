@@ -75,8 +75,10 @@ class NTBObject(object):
     #
 
     def __getattr__(self, name):
-        """On attribute lookup failure, if the object is only partially retrieved, get the rest of its data and try
-        again. Note that this method is only called whenever an attribute lookup *fails*."""
+        """
+        On attribute lookup failure, if the object is only partially retrieved, get the rest of its data and try again.
+        Note that this method is only called whenever an attribute lookup *fails*.
+        """
 
         # Verify that _is_partial (which is always set in __init__) actually is set. If not, we might be in some
         # low-level cache serialization state, in which case we don't want to apply our custom logic but just raise
@@ -112,8 +114,10 @@ class NTBObject(object):
     #
 
     def get_data(self, include_common=True, include_extra=False):
-        """Returns a dict of all data fields on this object. Set include_common to False to only return fields specific
-        to this datatype. Set include_extra to False to exclude fields not recognized in our data model."""
+        """
+        Returns a dict of all data fields on this object. Set include_common to False to only return fields specific
+        to this datatype. Set include_extra to False to exclude fields not recognized in our data model.
+        """
         field_names = [self.FIELD_MAP_UNICODE[f] for f in self.FIELDS]
         if include_common:
             field_names += NTBObject.COMMON_FIELDS
@@ -165,8 +169,10 @@ class NTBObject(object):
 
     @requires_object_id
     def _refresh(self):
-        """Refreshes the object if the ETag cache period is expired and the object is modified. If called with a
-        partial object, that object will be fetched unconditionally, without using its ETag."""
+        """
+        Refreshes the object if the ETag cache period is expired and the object is modified. If called with a partial
+        object, that object will be fetched unconditionally, without using its ETag.
+        """
         if self._is_partial:
             self._fetch()
             return
@@ -342,8 +348,10 @@ class NTBObject(object):
 
     @classmethod
     def lookup(cls, pages=1):
-        """Retrieve a complete list of these objects, partially fetched. Specify how many pages you want retrieved
-        (result count in a page is configured with LIMIT), or set to None to retrieve all documents."""
+        """
+        Retrieve a complete list of these objects, partially fetched. Specify how many pages you want retrieved
+        (result count in a page is configured with LIMIT), or set to None to retrieve all documents.
+        """
         objects = Settings.CACHE.get('turbasen.objects.%s.%s' % (cls.identifier, pages))
         if objects is None:
             logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (cls.identifier, pages))
