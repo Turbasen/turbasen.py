@@ -163,3 +163,14 @@ class TestClass:
         assert sted._is_partial
         sted._fetch()
         assert not sted._is_partial
+
+    @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
+    def test_equality(self, configure_dev, object_manager, post_managed_sted):
+        sted_local = object_manager.sted
+        sted_retrieved = turbasen.Sted.get(sted_local.object_id)
+        sted_unsaved = turbasen.Sted(
+            navn=sted_local.navn,
+        )
+        assert(sted_local == sted_local)
+        assert(sted_local == sted_retrieved)
+        assert(sted_retrieved != sted_unsaved)

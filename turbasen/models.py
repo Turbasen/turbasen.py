@@ -59,6 +59,16 @@ class NTBObject(object):
         else:
             return repr
 
+    def __eq__(self, other):
+        """Object equality relies on the object id being defined, and equal"""
+        if type(self) != type(other):
+            return False
+
+        if not self.object_id:
+            return False
+
+        return self.object_id == other.object_id
+
     #
     # Attribute manipulation
     # - Partial objects have not all attributes assigned; when one is accessed, retrieve the entire document first
