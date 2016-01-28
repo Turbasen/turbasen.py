@@ -347,15 +347,25 @@ class NTBObject(object):
             return object
 
     @classmethod
-    def lookup(cls, pages=None):
+    def lookup(cls, pages=None, params={}):
         """
-        Retrieve a complete list of these objects, partially fetched. Specify `pages` to limit the amount of pages
-        iterated. `settings.LIMIT` decides the amount of objects per page.
+        Retrieve a complete list of these objects, partially fetched.
+        Arguments:
+        - pages: Positive integer
+            Optionally set to positive integer to limit the amount of pages iterated. `settings.LIMIT` decides the
+            amount of objects per page.
+        - params: Dictionary
+            Add API filter parameters. Note the special parameter 'fields' which can be used to include more fields in
+            the partial objects. Note also that the following params will not be included: 'limit', 'status', 'tilbyder'
         """
         objects = Settings.CACHE.get('turbasen.objects.%s.%s' % (cls.identifier, pages))
         if objects is None:
+            # Ensure that the 'fields' parameter is a list
+            if 'fields' in params and type(params['fields']) != list:
+                params['fields'] = [params['fields']]
+
             logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (cls.identifier, pages))
-            objects = list(NTBObject.NTBIterator(cls, pages))
+            objects = list(NTBObject.NTBIterator(cls, pages, params))
             Settings.CACHE.set(
                 'turbasen.objects.%s.%s' % (cls.identifier, pages),
                 objects,
@@ -419,9 +429,24 @@ class NTBObject(object):
 
     class NTBIterator:
         """Document iterator"""
-        def __init__(self, cls, pages):
+        DEFAULT_FIELDS = ['navn', 'checksum', 'endret', 'status'] # Include checksum (etag)
+        DEFAULT_PARAMS = {
+            'limit': Settings.LIMIT,
+            'status': 'Offentlig',  # Ignore Kladd, Privat, og Slettet
+            'tilbyder': 'DNT',      # Future proofing, there might be other objects
+        }
+
+        def __init__(self, cls, pages, params):
             self.cls = cls
             self.pages = pages
+
+            # Add user-specified params, but overwrite any duplicates of our defaults
+            self.params = params
+            self.params.update(self.DEFAULT_PARAMS)
+
+            # Combine and add user-specified and default fields
+            fields = set(self.DEFAULT_FIELDS + self.params.get('fields', []))
+            self.params['fields'] = ','.join(fields)
 
         def __iter__(self):
             self.bulk_index = 0
@@ -449,13 +474,8 @@ class NTBObject(object):
             )
 
         def lookup_bulk(self):
-            params = {
-                'limit': Settings.LIMIT,
-                'skip': self.bulk_index,
-                'status': 'Offentlig',  # Ignore Kladd, Privat, og Slettet
-                'tilbyder': 'DNT',      # Future proofing, there might be other objects
-                'fields': ','.join(['navn', 'checksum', 'endret', 'status']), # Include checksum (etag)
-            }
+            params = self.params
+            params['skip'] = self.bulk_index
 
             if Settings.API_KEY is not None:
                 params['api_key'] = Settings.API_KEY

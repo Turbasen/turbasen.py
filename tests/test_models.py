@@ -143,6 +143,32 @@ class TestClass:
         assert result_list[0].object_id != ''
 
     @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
+    def test_lookup_fields(self, configure_dev):
+        results = turbasen.Sted.lookup(pages=1, params={
+            'fields': ['betjeningsgrad'],
+            'tags': 'Hytte',
+            'betjeningsgrad': 'Betjent',
+        })
+        result = results[0]
+        assert 'Hytte' in result.tags
+        assert result.betjeningsgrad == 'Betjent'
+        # Ensure that the previous assertion did *not* fetch the entire document
+        assert result._is_partial
+
+    @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
+    def test_lookup_single_field(self, configure_dev):
+        results = turbasen.Sted.lookup(pages=1, params={
+            'fields': 'betjeningsgrad', # Note that the string literal is not wrapped in a list
+            'tags': 'Hytte',
+            'betjeningsgrad': 'Betjent',
+        })
+        result = results[0]
+        assert 'Hytte' in result.tags
+        assert result.betjeningsgrad == 'Betjent'
+        # Ensure that the previous assertion did *not* fetch the entire document
+        assert result._is_partial
+
+    @pytest.mark.skipif(turbasen.settings.Settings.API_KEY is None, reason="API key not set")
     def test_extra(self, configure_dev):
         sted = turbasen.Sted(navn='Heia', foo_bar=42)
         assert hasattr(sted, 'navn')

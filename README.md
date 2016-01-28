@@ -20,9 +20,9 @@ turbasen.py is opinionated about available data fields, see the `FIELDS` attribu
 
 ### Static methods
 
-`def lookup(pages=1)`
+`def lookup(pages=1, params={})`
 
-Retrieve a list of all partial objects of this type. Limit the amount of objects returned by specifying `pages`. A page contains `settings.LIMIT` objects.
+Retrieve a list of all partial objects of this type. Limit the amount of objects returned by specifying `pages`. A page contains `settings.LIMIT` objects. Values in the `params` dict are passed as query parameters to the API.
 
 `def get(object_id)`
 
