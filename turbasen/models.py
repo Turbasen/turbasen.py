@@ -362,11 +362,7 @@ class NTBObject(object):
         if 'fields' in params and type(params['fields']) != list:
             params['fields'] = [params['fields']]
 
-        # Create a deterministic cache key for the given parameters
-        params_pairs = sorted(params.items(), key=lambda i: i[0])
-        params_list = ["%s=%s" % (i[0], i[1]) for i in params_pairs]
-        params_key = '&'.join(params_list).encode('utf-8')
-
+        params_key = hash(frozenset(params.items()))
         objects = Settings.CACHE.get('turbasen.objects.%s.%s.%s' % (cls.identifier, pages, params_key))
         if objects is None:
             logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (cls.identifier, pages))
