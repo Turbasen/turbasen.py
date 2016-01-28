@@ -26,6 +26,6 @@ setup(
     ],
     install_requires=['requests>=2.9,<2.10'],
     extras_require={
-        'dev': ['pytest>=2.7,<2.8'],
+        'dev': ['pytest>=2.8,<2.9'],
     }
 )
