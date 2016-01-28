@@ -475,9 +475,9 @@ class NTBObject(object):
             params = self.params
 
             # Set our default params, overwriting any duplicates
-            params['limit'] = Settings.LIMIT,
-            params['status'] = 'Offentlig',  # Ignore Kladd, Privat, og Slettet
-            params['tilbyder'] = 'DNT',      # Future proofing, there might be other objects
+            params['limit'] = Settings.LIMIT
+            params['status'] = 'Offentlig'  # Ignore Kladd, Privat, og Slettet
+            params['tilbyder'] = 'DNT'      # Future proofing, there might be other objects
             params['skip'] = self.bulk_index
 
             if Settings.API_KEY is not None:
