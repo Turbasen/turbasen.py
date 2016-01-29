@@ -1,7 +1,7 @@
 from setuptools import setup
 
 name = 'turbasen'
-VERSION = '2.4.5'
+VERSION = '2.4.6'
 
 setup(
     name=name,
