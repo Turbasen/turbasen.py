@@ -8,9 +8,10 @@ import sys
 
 import requests
 
-from .settings import Settings
-from .exceptions import DocumentNotFound, Unauthorized, InvalidDocument
 from .decorators import requires_object_id, requires_not_partial
+from .exceptions import DocumentNotFound, Unauthorized, InvalidDocument
+from .settings import Settings
+from .util import params_to_dotnotation
 from . import events
 
 logger = logging.getLogger('turbasen')
@@ -359,7 +360,7 @@ class NTBObject(object):
             Add API filter parameters. Note the special parameter 'fields' which can be used to include more fields in
             the partial objects. Note also that the following params will not be included: 'limit', 'status', 'tilbyder'
         """
-        params = params.copy()
+        params = params_to_dotnotation(params.copy())
 
         # If the 'fields' parameter contains a single value, wrap it in a list
         if 'fields' in params and type(params['fields']) != list:
