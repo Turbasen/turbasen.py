@@ -21,6 +21,7 @@ class NTBObject(object):
         'navngiving',
         'status',
         'navn',
+        'privat',
     ]
 
     COMMON_FIELDS_READONLY = [
