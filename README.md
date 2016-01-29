@@ -5,6 +5,7 @@
 [![PyPi version](https://img.shields.io/pypi/v/turbasen.svg "PyPI version")](https://pypi.python.org/pypi/turbasen)
 [![Python versions](https://img.shields.io/pypi/pyversions/turbasen.svg "Python versions")](https://pypi.python.org/pypi/turbasen)
 [![Dependency status](https://img.shields.io/requires/github/Turbasen/turbasen.py.svg "Dependency status")](https://requires.io/github/Turbasen/turbasen.py/requirements/)
+[![Docs](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat "Documentation")](http://turbasenpy.readthedocs.org/en/latest/)
 
 Python client for [Nasjonal Turbase](http://www.nasjonalturbase.no/).
 
