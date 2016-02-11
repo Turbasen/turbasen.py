@@ -10,7 +10,7 @@ setup(
     description='Client for Nasjonal Turbase REST API',
     long_description='See https://github.com/Turbasen/turbasen.py/blob/master/README.md',
     author='Ali Kaafarani',
-    author_email='ali.kaafarani@turistforeningen.no',
+    author_email='ali.kaafarani@dnt.no',
     url='https://github.com/Turbasen/turbasen.py',
     download_url='https://github.com/Turbasen/turbasen.py/tarball/v%s' % (VERSION),
     keywords=['turbasen', 'nasjonalturbase', 'turistforening', 'rest-api'],
