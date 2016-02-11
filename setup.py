@@ -14,6 +14,7 @@ setup(
     url='https://github.com/Turbasen/turbasen.py',
     download_url='https://github.com/Turbasen/turbasen.py/tarball/v%s' % (VERSION),
     keywords=['turbasen', 'nasjonalturbase', 'turistforening', 'rest-api'],
+    license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
