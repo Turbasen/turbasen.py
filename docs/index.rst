@@ -165,8 +165,8 @@ Static methods
 
    Parameters passed in the ``params`` dict are forwarded to the API. These may
    be used to filter the query, or specify which ``fields`` should be returned
-  to increase performance, avoiding extra fetches for
-  :ref:`partial objects <partial-objects>`.
+   to increase performance, avoiding extra fetches for
+   :ref:`partial objects <partial-objects>`.
 
 .. py:function:: get(object_id)
 
