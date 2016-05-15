@@ -25,7 +25,7 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
     ],
-    install_requires=['requests>=2.9,<2.10'],
+    install_requires=['requests>=2.10.0,<3'],
     extras_require={
         'dev': ['pytest', 'ipython'],
     }
