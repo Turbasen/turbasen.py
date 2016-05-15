@@ -27,6 +27,6 @@ setup(
     ],
     install_requires=['requests>=2.9,<2.10'],
     extras_require={
-        'dev': ['pytest'],
+        'dev': ['pytest', 'ipython'],
     }
 )
