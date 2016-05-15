@@ -2,10 +2,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # Import the models we want directly available through the root module
-from .models import \
-    Gruppe, \
-    Omrade, \
-    Sted
+from .models import (
+    Gruppe,
+    Omrade,
+    Sted,
+)
 
 # Make configure directly available through the root module
 from .settings import configure
