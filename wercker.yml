@@ -36,8 +36,8 @@ build:
     #     clean_wheel_dir: true
 
     - script:
-        name: py.test tests
-        code: py.test tests
+        name: run tests
+        code: python -m unittest
 
     # A custom script step, name value is used in the UI
     # and the code value contains the command that get executed

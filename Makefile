@@ -1,5 +1,5 @@
 test:
-	docker-compose run --rm dev py.test
+	docker-compose run --rm dev python -m unittest
 
 build:
 	docker-compose build dev
