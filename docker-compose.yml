@@ -10,3 +10,4 @@ services:
     env_file: .env
     environment:
       PYTHONUNBUFFERED: 1
+      ENDPOINT_URL: https://dev.nasjonalturbase.no

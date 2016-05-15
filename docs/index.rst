@@ -56,6 +56,9 @@ Environment variables
 ``API_KEY``
   Your API key. Can also be specified via the ``API_KEY`` setting.
 
+``ENDPOINT_URL``
+  API endpoint. See the ``ENDPOINT_URL`` setting.
+
 Settings
 -----------------------------
 
