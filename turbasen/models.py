@@ -100,7 +100,7 @@ class NTBObject(object):
         Returns a dict of all data fields on this object. Set include_common to False to only return fields specific
         to this datatype. Set include_extra to False to exclude fields not recognized in our data model.
         """
-        field_names = [self.FIELD_MAP_UNICODE[f] for f in self.FIELDS]
+        field_names = self.FIELDS.copy()
         if include_common:
             field_names += NTBObject.COMMON_FIELDS
         data = {
@@ -126,7 +126,7 @@ class NTBObject(object):
         for key, value in fields.items():
             if key in self.FIELDS:
                 # Expected data fields
-                setattr(self, self.FIELD_MAP_UNICODE.get(key, key), value)
+                setattr(self, key, value)
             elif key in NTBObject.COMMON_FIELDS + NTBObject.COMMON_FIELDS_READONLY:
                 # Expected common metadata
                 setattr(self, key, value)
@@ -412,11 +412,6 @@ class NTBObject(object):
     # Internal utilities
     #
 
-    @staticmethod
-    def _map_fieldnames(fields):
-        """Returns a dict mapping of field names from unicode to ascii"""
-        return {f: f.replace('æ', 'ae').replace('ø', 'o').replace('å', 'a') for f in fields}
-
     class NTBIterator:
         """Document iterator"""
         DEFAULT_FIELDS = ['navn', 'checksum', 'endret', 'status'] # Include checksum (etag)
@@ -496,7 +491,6 @@ class Bilde(NTBObject):
         'grupper',
         'img',
     ]
-    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
 
 class Gruppe(NTBObject):
     identifier = 'grupper'
@@ -519,7 +513,6 @@ class Gruppe(NTBObject):
         'steder',
         'url',
     ]
-    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
 
 class Omrade(NTBObject):
     identifier = 'områder'
@@ -530,7 +523,6 @@ class Omrade(NTBObject):
         'beskrivelse',
         'bilder',
     ]
-    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
 
 class Sted(NTBObject):
     identifier = 'steder'
@@ -557,7 +549,6 @@ class Sted(NTBObject):
         'kart',
         'turkart',
     ]
-    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
 
 class Tur(NTBObject):
     identifier = 'turer'
@@ -581,4 +572,3 @@ class Tur(NTBObject):
         'steder',
         'url',
     ]
-    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
