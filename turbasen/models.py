@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 import json
 import logging
-import sys
 
 import requests
 
@@ -49,14 +48,7 @@ class NTBObject(object):
         except AttributeError:
             navn = '?'
 
-        repr = '<%s: %s%s: %s>' % (self.__class__.__name__, object_id, ' (partial)' if self._is_partial else '', navn)
-
-        # Custom py2/3 compatibility handling. We're avoiding the 'six' library for now because YAGNI, but if these
-        # explicit checks grow out of hand, consider replacing them with six.
-        if sys.version_info.major == 2:
-            return repr.encode('utf-8')
-        else:
-            return repr
+        return '<%s: %s%s: %s>' % (self.__class__.__name__, object_id, ' (partial)' if self._is_partial else '', navn)
 
     def __eq__(self, other):
         """Object equality relies on the object id being defined, and equal"""
@@ -97,16 +89,7 @@ class NTBObject(object):
             self._fetch()
             return getattr(self, name)
         else:
-            # Default behavior - no such attribute
-            # Manual py2/3 compatibility handling for encoding exception message
-            if sys.version_info.major == 2:
-                error_message = ("'%s' object has no attribute '%s'" % (
-                    repr(self).decode('utf-8'),
-                    name,
-                )).encode('utf-8')
-            else:
-                error_message = "'%s' object has no attribute '%s'" % (self, name)
-            raise AttributeError(error_message)
+            raise AttributeError("'%s' object has no attribute '%s'" % (self, name))
 
     #
     # Internal data handling
@@ -453,10 +436,6 @@ class NTBObject(object):
             self.document_list = []
             self.exhausted = False
             return self
-
-        def next(self):
-            """For python2 compatibility"""
-            return self.__next__()
 
         def __next__(self):
             if self.document_index >= len(self.document_list):
