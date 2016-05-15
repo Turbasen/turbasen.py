@@ -42,10 +42,6 @@ Datatypes
 
   `Trips <http://www.nasjonalturbase.no/data/turer.html>`_
 
-  .. warning::
-
-    Not yet implemented.
-
 Environment variables
 -----------------------------
 

@@ -582,3 +582,27 @@ class Sted(NTBObject):
         'turkart',
     ]
     FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
+
+class Tur(NTBObject):
+    identifier = 'turer'
+    FIELDS = [
+        'geojson',
+        'distanse',
+        'retning',
+        'områder',
+        'fylker',
+        'beskrivelse',
+        'adkomst',
+        'lenker',
+        'gradering',
+        'passer_for',
+        'tilrettelagt_for',
+        'sesong',
+        'tidsbruk',
+        'tags',
+        'grupper',
+        'bilder',
+        'steder',
+        'url',
+    ]
+    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)

@@ -7,6 +7,7 @@ from .models import (
     Gruppe,
     Omrade,
     Sted,
+    Tur,
 )
 
 # Make configure directly available through the root module

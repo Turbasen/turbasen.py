@@ -39,6 +39,17 @@ class ObjectsFixture:
             navngiving='Testdata',
         )
 
+        self.tur = turbasen.Tur(
+            lisens='Privat',
+            navngiving='Testdata',
+            status='Kladd',
+            navn='Testtur',
+            fylker=['Testfylket'],
+            beskrivelse='Testturen er en opplevelse for seg selv',
+            gradering='Enkel',
+            sesong=['1'],
+        )
+
 class TestClass(unittest.TestCase):
     def setUp(self):
         turbasen.configure(ENDPOINT_URL='https://dev.nasjonalturbase.no')
@@ -56,28 +67,33 @@ class TestClass(unittest.TestCase):
         self.assertIsNone(self.objects.sted.object_id)
         self.assertIsNone(self.objects.gruppe.object_id)
         self.assertIsNone(self.objects.omrade.object_id)
+        self.assertIsNone(self.objects.tur.object_id)
 
         # POST our fixture objects
         self.objects.bilde.save()
         self.objects.sted.save()
         self.objects.gruppe.save()
         self.objects.omrade.save()
+        self.objects.tur.save()
 
         self.assertIsNotNone(self.objects.bilde.object_id)
         self.assertIsNotNone(self.objects.sted.object_id)
         self.assertIsNotNone(self.objects.gruppe.object_id)
         self.assertIsNotNone(self.objects.omrade.object_id)
+        self.assertIsNotNone(self.objects.tur.object_id)
 
         # GET the data back
         bilde = turbasen.Bilde.get(self.objects.bilde.object_id)
         sted = turbasen.Sted.get(self.objects.sted.object_id)
         gruppe = turbasen.Gruppe.get(self.objects.gruppe.object_id)
         omrade = turbasen.Omrade.get(self.objects.omrade.object_id)
+        tur = turbasen.Tur.get(self.objects.tur.object_id)
 
         self.assertEqual(bilde.navn, self.objects.bilde.navn)
         self.assertEqual(sted.navn, self.objects.sted.navn)
         self.assertEqual(gruppe.navn, self.objects.gruppe.navn)
         self.assertEqual(omrade.navn, self.objects.omrade.navn)
+        self.assertEqual(tur.navn, self.objects.tur.navn)
 
     @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
     def test_put(self):
