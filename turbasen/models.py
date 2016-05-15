@@ -154,7 +154,7 @@ class NTBObject(object):
                 # Unexpected extra attributes - group in the 'extra' dictionary
                 self._extra[key] = value
 
-        if self.object_id is not None and etag is not None:
+        if self.object_id is not None and etag is not None and not self._is_partial:
             Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
             logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self.object_id, self._etag))
 
@@ -170,15 +170,9 @@ class NTBObject(object):
         self._set_data(etag=headers['etag'], fields=document)
 
     @requires_object_id
+    @requires_not_partial
     def _refresh(self):
-        """
-        Refreshes the object if the ETag cache period is expired and the object is modified. If called with a partial
-        object, that object will be fetched unconditionally, without using its ETag.
-        """
-        if self._is_partial:
-            self._fetch()
-            return
-
+        """Refreshes the object if the ETag cache period is expired and the object is modified"""
         if self._etag is not None and self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
             logger.debug("[refresh %s]: Object is younger than ETag cache period (%s), skipping ETag check" % (
                 self.object_id,
