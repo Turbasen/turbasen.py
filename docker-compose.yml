@@ -1,0 +1,12 @@
+version: '2'
+
+services:
+  dev:
+    build: .
+    image: turbasen.py
+    working_dir: /app
+    volumes:
+    - .:/app
+    env_file: .env
+    environment:
+      PYTHONUNBUFFERED: 1
