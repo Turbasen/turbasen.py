@@ -164,10 +164,18 @@ class NTBObject(object):
 
     @requires_object_id
     def _fetch(self):
-        """Retrieve this object's entire document unconditionally (does not use ETag)"""
-        headers, document = NTBObject._get_document(self.identifier, self.object_id)
-        self._is_partial = False
-        self._set_data(etag=headers['etag'], fields=document)
+        """For partial objects: Retrieve and set all document fields"""
+        object = Settings.CACHE.get('turbasen.object.%s' % self.object_id)
+        if object is None:
+            logger.debug("[_fetch %s/%s]: Not in local cache, performing GET request..." % (self.identifier, self.object_id))
+            headers, document = NTBObject._get_document(self.identifier, self.object_id)
+            self._is_partial = False
+            self._set_data(etag=headers['etag'], fields=document)
+        else:
+            logger.debug("[_fetch %s/%s]: Retrieved cached object, updating and refreshing..." % (self.identifier, self.object_id))
+            self._is_partial = False
+            self._set_data(etag=object._etag, fields=object.get_data())
+            self._refresh()
 
     @requires_object_id
     @requires_not_partial
