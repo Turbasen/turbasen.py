@@ -59,8 +59,8 @@ Environment variables
 Settings
 -----------------------------
 
-``ENDPOINT_URL = http://api.nasjonalturbase.no``
-  API endpoint. Set to ``http://dev.nasjonalturbase.no`` for development.
+``ENDPOINT_URL = https://api.nasjonalturbase.no``
+  API endpoint. Set to ``https://dev.nasjonalturbase.no`` for development.
 
 ``LIMIT = 20``
   Objects returned per page. API hard max limit is currently 50. Note that
@@ -94,7 +94,7 @@ Usage
 
   # Initialization
   import turbasen
-  turbasen.configure(LIMIT=3, ENDPOINT='http://dev.nasjonalturbase.no')
+  turbasen.configure(LIMIT=3, ENDPOINT='https://dev.nasjonalturbase.no')
 
   # Lookup partial documents
   turbasen.Sted.lookup(pages=1)

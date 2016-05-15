@@ -6,7 +6,7 @@ import os
 from .cache import DummyCache
 
 class Settings:
-    ENDPOINT_URL = 'http://api.nasjonalturbase.no'
+    ENDPOINT_URL = 'https://api.nasjonalturbase.no'
     LIMIT = 20
     CACHE = DummyCache()
     CACHE_LOOKUP_PERIOD = 60 * 60 * 24
