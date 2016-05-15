@@ -26,10 +26,6 @@ Datatypes
 
   `Images <http://www.nasjonalturbase.no/data/bilder.html>`_
 
-  .. warning::
-
-    Not yet implemented.
-
 .. py:class:: turbasen.Gruppe
 
   `Groups <http://www.nasjonalturbase.no/data/grupper.html>`_

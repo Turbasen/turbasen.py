@@ -509,6 +509,19 @@ class NTBObject(object):
                 # Specified page limit reached
                 self.exhausted = True
 
+class Bilde(NTBObject):
+    identifier = 'bilder'
+    FIELDS = [
+        'geojson',
+        'beskrivelse',
+        'fotograf',
+        'eier',
+        'tags',
+        'grupper',
+        'img',
+    ]
+    FIELD_MAP_UNICODE = NTBObject._map_fieldnames(FIELDS)
+
 class Gruppe(NTBObject):
     identifier = 'grupper'
     FIELDS = [
