@@ -53,7 +53,7 @@ Datatypes
 Environment variables
 -----------------------------
 
-``TURBASEN_API_KEY``
+``API_KEY``
   Your API key. Can also be specified via the ``API_KEY`` setting.
 
 Settings
@@ -82,7 +82,7 @@ Settings
 ``ETAG_CACHE_PERIOD = 60 * 60``
   Number of seconds to ignore ``Etag`` checks and use local cache blindly.
 
-``API_KEY = os.environ.get('TURBASEN_API_KEY')``
+``API_KEY = os.environ.get('API_KEY')``
   API key is currently required for access.
 
 
