@@ -22,7 +22,6 @@ setup(
         'Natural Language :: Norwegian',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
     ],
     install_requires=['requests>=2.10.0,<3'],
