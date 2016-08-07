@@ -56,12 +56,12 @@ class TestClass(unittest.TestCase):
         with self.configure_cache() as cache:
             # Save the object and assert that the cache has been set
             self.sted.save()
-            self.assertIsNotNone(turbasen.settings.Settings.CACHE.get('turbasen.object.%s' % self.sted.object_id))
+            self.assertIsNotNone(turbasen.settings.Settings.CACHE.get('turbasen.object.%s' % self.sted['_id']))
             self.assertEqual(cache.hits, 1)
             self.assertEqual(cache.misses, 0)
 
             # Now get it back, and asser that it was retrieved from cache
-            sted = turbasen.Sted.get(self.sted.object_id)
+            sted = turbasen.Sted.get(self.sted['_id'])
             self.assertEqual(cache.hits, 2)
             self.assertEqual(cache.misses, 0)
 
@@ -71,12 +71,12 @@ class TestClass(unittest.TestCase):
         self.sted.save()
         with self.configure_cache() as cache:
             # Prepare a partial object, fetch it, and assert that the cache is set
-            partial_sted = turbasen.Sted(_meta={'id': self.sted.object_id, 'is_partial': True})
-            self.assertIsNone(turbasen.settings.Settings.CACHE.get('turbasen.object.%s' % partial_sted.object_id))
+            partial_sted = turbasen.Sted(_is_partial=True, _id=self.sted['_id'])
+            self.assertIsNone(turbasen.settings.Settings.CACHE.get('turbasen.object.%s' % partial_sted['_id']))
             self.assertEqual(cache.hits, 0)
             self.assertEqual(cache.misses, 1)
             partial_sted._fetch() # triggers another cache miss
-            self.assertIsNotNone(turbasen.settings.Settings.CACHE.get('turbasen.object.%s' % partial_sted.object_id))
+            self.assertIsNotNone(turbasen.settings.Settings.CACHE.get('turbasen.object.%s' % partial_sted['_id']))
             self.assertEqual(cache.hits, 1)
             self.assertEqual(cache.misses, 2)
 
