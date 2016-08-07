@@ -8,7 +8,7 @@ setup(
     packages=[name],
     version=VERSION,
     description='Client for Nasjonal Turbase REST API',
-    long_description='See https://github.com/Turbasen/turbasen.py/blob/master/README.md',
+    long_description='Documentation: https://turbasenpy.readthedocs.io/',
     author='Ali Kaafarani',
     author_email='ali.kaafarani@dnt.no',
     url='https://github.com/Turbasen/turbasen.py',
@@ -22,11 +22,10 @@ setup(
         'Natural Language :: Norwegian',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
     ],
     install_requires=['requests>=2.10.0,<3'],
     extras_require={
-        'dev': ['ipython'],
+        'dev': ['sphinx', 'ipython', 'flake8'],
     }
 )

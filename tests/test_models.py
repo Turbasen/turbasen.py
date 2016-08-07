@@ -1,6 +1,3 @@
-# encoding: utf-8
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import unittest
 
 import turbasen
@@ -24,7 +21,7 @@ class ObjectsFixture:
             navngiving='Testdata',
         )
 
-        self.omrade = turbasen.Omrade(
+        self.omrade = turbasen.Område(
             lisens='Privat',
             status='Kladd',
             navn='Testområde',
@@ -63,11 +60,11 @@ class TestClass(unittest.TestCase):
     @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
     def test_post_get(self):
         # Assert that the fixture objects are not saved on the server
-        self.assertIsNone(self.objects.bilde.object_id)
-        self.assertIsNone(self.objects.sted.object_id)
-        self.assertIsNone(self.objects.gruppe.object_id)
-        self.assertIsNone(self.objects.omrade.object_id)
-        self.assertIsNone(self.objects.tur.object_id)
+        self.assertNotIn('_id', self.objects.bilde)
+        self.assertNotIn('_id', self.objects.sted)
+        self.assertNotIn('_id', self.objects.gruppe)
+        self.assertNotIn('_id', self.objects.omrade)
+        self.assertNotIn('_id', self.objects.tur)
 
         # POST our fixture objects
         self.objects.bilde.save()
@@ -76,42 +73,42 @@ class TestClass(unittest.TestCase):
         self.objects.omrade.save()
         self.objects.tur.save()
 
-        self.assertIsNotNone(self.objects.bilde.object_id)
-        self.assertIsNotNone(self.objects.sted.object_id)
-        self.assertIsNotNone(self.objects.gruppe.object_id)
-        self.assertIsNotNone(self.objects.omrade.object_id)
-        self.assertIsNotNone(self.objects.tur.object_id)
+        self.assertIn('_id', self.objects.bilde)
+        self.assertIn('_id', self.objects.sted)
+        self.assertIn('_id', self.objects.gruppe)
+        self.assertIn('_id', self.objects.omrade)
+        self.assertIn('_id', self.objects.tur)
 
         # GET the data back
-        bilde = turbasen.Bilde.get(self.objects.bilde.object_id)
-        sted = turbasen.Sted.get(self.objects.sted.object_id)
-        gruppe = turbasen.Gruppe.get(self.objects.gruppe.object_id)
-        omrade = turbasen.Omrade.get(self.objects.omrade.object_id)
-        tur = turbasen.Tur.get(self.objects.tur.object_id)
+        bilde = turbasen.Bilde.get(self.objects.bilde['_id'])
+        sted = turbasen.Sted.get(self.objects.sted['_id'])
+        gruppe = turbasen.Gruppe.get(self.objects.gruppe['_id'])
+        omrade = turbasen.Område.get(self.objects.omrade['_id'])
+        tur = turbasen.Tur.get(self.objects.tur['_id'])
 
-        self.assertEqual(bilde.navn, self.objects.bilde.navn)
-        self.assertEqual(sted.navn, self.objects.sted.navn)
-        self.assertEqual(gruppe.navn, self.objects.gruppe.navn)
-        self.assertEqual(omrade.navn, self.objects.omrade.navn)
-        self.assertEqual(tur.navn, self.objects.tur.navn)
+        self.assertEqual(bilde['navn'], self.objects.bilde['navn'])
+        self.assertEqual(sted['navn'], self.objects.sted['navn'])
+        self.assertEqual(gruppe['navn'], self.objects.gruppe['navn'])
+        self.assertEqual(omrade['navn'], self.objects.omrade['navn'])
+        self.assertEqual(tur['navn'], self.objects.tur['navn'])
 
     @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
     def test_put(self):
         self.objects.sted.save()
 
         # Change some data
-        navn_original = self.objects.sted.navn
-        navn_reversed = self.objects.sted.navn[::-1]
-        self.assertNotEqual(navn_reversed, self.objects.sted.navn)
+        navn_original = self.objects.sted['navn']
+        navn_reversed = self.objects.sted['navn'][::-1]
+        self.assertNotEqual(navn_reversed, self.objects.sted['navn'])
 
         # PUT the object with the new data
-        self.objects.sted.navn = navn_reversed
+        self.objects.sted['navn'] = navn_reversed
         self.objects.sted.save()
 
         # See that we can retrieve our changed data
-        sted = turbasen.Sted.get(self.objects.sted.object_id)
-        self.assertNotEqual(navn_original, sted.navn)
-        self.assertEqual(navn_reversed, sted.navn)
+        sted = turbasen.Sted.get(self.objects.sted['_id'])
+        self.assertNotEqual(navn_original, sted['navn'])
+        self.assertEqual(navn_reversed, sted['navn'])
 
     @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
     def test_delete(self):
@@ -119,9 +116,9 @@ class TestClass(unittest.TestCase):
         self.objects.sted.save()
 
         # See that we can delete it
-        object_id = self.objects.sted.object_id
+        object_id = self.objects.sted['_id']
         self.objects.sted.delete()
-        self.assertIsNone(self.objects.sted.object_id)
+        self.assertFalse('_id' in self.objects.sted)
         with self.assertRaises(turbasen.exceptions.DocumentNotFound):
             turbasen.Sted.get(object_id)
 
@@ -134,55 +131,44 @@ class TestClass(unittest.TestCase):
         self.assertEqual(etag, self.objects.sted._etag)
 
     @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
-    def test_lookup(self):
-        results = turbasen.Sted.lookup(pages=2)
+    def test_list(self):
+        results = turbasen.Sted.list(pages=2)
         result_list = list(results)
         self.assertEqual(len(result_list), turbasen.settings.Settings.LIMIT * 2)
-        self.assertNotEqual(result_list[0].object_id, '')
+        self.assertNotEqual(result_list[0]['_id'], '')
 
     @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
-    def test_lookup_fields(self):
-        results = turbasen.Sted.lookup(pages=1, params={
+    def test_list_fields(self):
+        results = turbasen.Sted.list(pages=1, params={
             'fields': ['betjeningsgrad'],
             'tags': 'Hytte',
             'betjeningsgrad': 'Betjent',
         })
         result = results[0]
-        self.assertIn('Hytte', result.tags)
-        self.assertEqual(result.betjeningsgrad, 'Betjent')
+        self.assertIn('Hytte', result['tags'])
+        self.assertEqual(result['betjeningsgrad'], 'Betjent')
         # Ensure that the previous assertion did *not* fetch the entire document
         self.assertTrue(result._is_partial)
 
     @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
-    def test_lookup_single_field(self):
-        results = turbasen.Sted.lookup(pages=1, params={
+    def test_list_single_field(self):
+        results = turbasen.Sted.list(pages=1, params={
             'fields': 'betjeningsgrad', # Note that the string literal is not wrapped in a list
             'tags': 'Hytte',
             'betjeningsgrad': 'Betjent',
         })
         result = results[0]
-        self.assertIn('Hytte', result.tags)
-        self.assertEqual(result.betjeningsgrad, 'Betjent')
+        self.assertIn('Hytte', result['tags'])
+        self.assertEqual(result['betjeningsgrad'], 'Betjent')
         # Ensure that the previous assertion did *not* fetch the entire document
         self.assertTrue(result._is_partial)
-
-    @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
-    def test_extra(self):
-        sted = turbasen.Sted(navn='Heia', foo_bar=42)
-        self.assertTrue(hasattr(sted, 'navn'))
-        self.assertFalse(hasattr(sted, 'foo_bar'))
-        self.assertIn('foo_bar', sted._extra)
-        self.assertIn('foo_bar', sted.get_data(include_extra=True))
-        self.assertNotIn('foo_bar', sted.get_data(include_extra=False))
 
     @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
     def test_fetch_partial_object(self):
         self.objects.sted.save()
         sted = turbasen.Sted(
-            _meta={
-                'id': self.objects.sted.object_id,
-                'is_partial': True,
-            },
+            _is_partial=True,
+            _id=self.objects.sted['_id'],
             navn='Partial',
         )
         self.assertTrue(sted._is_partial)
@@ -192,8 +178,8 @@ class TestClass(unittest.TestCase):
     @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
     def test_equality(self):
         self.objects.sted.save()
-        sted_retrieved = turbasen.Sted.get(self.objects.sted.object_id)
-        sted_unsaved = turbasen.Sted(navn=self.objects.sted.navn)
+        sted_retrieved = turbasen.Sted.get(self.objects.sted['_id'])
+        sted_unsaved = turbasen.Sted(navn=self.objects.sted['navn'])
         self.assertEqual(self.objects.sted, self.objects.sted)
         self.assertEqual(self.objects.sted, sted_retrieved)
         self.assertNotEqual(sted_retrieved, sted_unsaved)

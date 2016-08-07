@@ -6,10 +6,19 @@
 turbasen.py
 =============================
 
-Python client for `Nasjonal Turbase <http://www.nasjonalturbase.no/>`_.
+Python client for `Nasjonal Turbase <http://www.nasjonalturbase.no/>`_,
+featuring:
 
-This client is opinionated about data fields and unrecognized fields require
-explicit handling if wanted.
+- :ref:`Object model for all datatypes <datatypes>`
+- :ref:`Container API on instances to access document fields (dict-like)
+  <document-fields>`
+- :ref:`Exceptions abstract away HTTP status codes <exceptions>`
+- :ref:`Automatic iteration over paginated list queries <static-methods>`
+- :ref:`Handling partial documents returned from list queries
+  <partial-documents>`
+- :ref:`ETag handling with refresh on expiry <settings>`
+- :ref:`Client caching <settings>`
+- :ref:`Event triggers <events>`
 
 Installation
 -----------------------------
@@ -18,6 +27,7 @@ Installation
 
   pip install turbasen
 
+.. _datatypes:
 
 Datatypes
 -----------------------------
@@ -30,7 +40,7 @@ Datatypes
 
   `Groups <http://www.nasjonalturbase.no/data/grupper.html>`_
 
-.. py:class:: turbasen.Omrade
+.. py:class:: turbasen.Område
 
   `Areas <http://www.nasjonalturbase.no/data/omrader.html>`_
 
@@ -51,6 +61,8 @@ Environment variables
 ``ENDPOINT_URL``
   API endpoint. See the ``ENDPOINT_URL`` setting.
 
+.. _settings:
+
 Settings
 -----------------------------
 
@@ -58,7 +70,7 @@ Settings
   API endpoint. Set to ``https://dev.nasjonalturbase.no`` for development.
 
 ``LIMIT = 20``
-  Objects returned per page. API hard max limit is currently 50. Note that
+  Documents returned per page. API hard max limit is currently 50. Note that
   setting this to a low number when the use case is to retrieve all documents is
   inefficient.
 
@@ -75,61 +87,55 @@ Settings
   normally be high.
 
 ``ETAG_CACHE_PERIOD = 60 * 60``
-  Number of seconds to ignore ``Etag`` checks and use local cache blindly.
+  Number of seconds to ignore ``ETag`` checks and use local cache blindly.
 
-``API_KEY = os.environ.get('API_KEY')``
-  API key is currently required for access.
+``API_KEY = os.environ.get('API_KEY', '')``
+  Get your API key at
+  `Nasjonal Turbase Developer <https://developer.nasjonalturbase.no/>`_.
 
 
 
-Usage
+Example usage
 -----------------------------
+
+Initialization:
 
 .. code-block:: python
 
-  # Initialization
   import turbasen
   turbasen.configure(LIMIT=3, ENDPOINT='https://dev.nasjonalturbase.no')
 
-  # Lookup partial documents
-  turbasen.Sted.lookup(pages=1)
-  # [<Sted: 546b36a511f41a9c00c0d4d9 (partial): En liten hytte>,
-  #  <Sted: 546a051011f41a9c00c0d4cc (partial): Snøhulen>,
-  #  <Sted: 555f1f4206b9ce06003405c5 (partial): Strømfoss>]
+List documents, with some parameter filters:
 
-  # Add filter parameters
-  turbasen.Sted.lookup(pages=1, params={'tags': 'Hytte'})
+.. code-block:: python
+
+  turbasen.Sted.list(pages=1, params={
+    'tilbyder': 'DNT',
+    'status': 'Offentlig',
+    'tags': 'Hytte',
+  })
+
   # [<Sted: 52407fb375049e561500027d (partial): Øvre Grue>,
   #  <Sted: 52407fb375049e561500035a (partial): Ravnastua fjellstue>,
   #  <Sted: 52407fb375049e5615000356 (partial): Lahpoluoppal>]
 
-  # Get single document
+Get single document:
+
+.. code-block:: python
+
   sted = turbasen.Sted.get('546b36a511f41a9c00c0d4d9')
   # <Sted: 546b36a511f41a9c00c0d4d9: En liten hytte>
-  sted.geojson
-  # {
-  #  'coordinates': [8.2912015914917, 60.12502756386393],
-  #  'type': 'Point'
-  # }
-  len(sted.get_data().keys())
-  # 12
 
-  # Save document
-  sted.save()
+  sted['navn']
+  # En liten hytte
 
-  # Unrecognized fields are discarded by default and require
-  # explicit handling explicitly if wanted
-  len(sted.get_data(include_extra=True).keys())
-  # 13
-  {
-      k: v
-      for k, v in s.get_data(include_extra=True).items()
-      if k not in s.get_data()
-  }
-  # {'unknown_key': 'foo'}
-  sted.save(include_extra=True)
+  len(sted)
+  # 17
 
-  # Create and delete document
+Create and delete document:
+
+.. code-block:: python
+
   sted = turbasen.Sted(
       lisens='Privat',
       status='Kladd',
@@ -137,60 +143,79 @@ Usage
       beskrivelse='Testcabin',
       tags=['Hytte'],
   )
+
   sted.save()
-  # Turbasen POST warning: {
-  #   'resource': 'Document',
-  #   'field': 'navngiving',
+  # API warning: {
   #   'code': 'missing_field',
+  #   'field': 'navngiving',
+  #   'resource': 'Document'
   # }
+
   sted.delete()
 
 
 API
 -----------------------------
 
+.. _static-methods:
+
 Static methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: lookup(pages=None, params=dict())
+.. py:function:: list(pages=None, params=dict())
 
-   Return an iterator yielding all objects of this class object type. Limit the
-   number of objects to the number of ``pages`` wanted where each page contains
-   ``LIMIT`` objects from the settings.
+   Return a list of documents. If ``pages`` is not ``None``, limits the results
+   to ``pages`` pages with ``LIMIT`` documents on each page.
 
-   Parameters passed in the ``params`` dict are forwarded to the API. These may
-   be used to filter the query, or specify which ``fields`` should be returned
-   to increase performance, avoiding extra fetches for
-   :ref:`partial objects <partial-objects>`.
+   Filter results with ``params``, or specify which ``fields`` should be
+   returned to increase performance, avoiding extra fetches for
+   :ref:`partial documents <partial-documents>`. See
+   `the API documentation <http://www.nasjonalturbase.no/api/>`_.
 
 .. py:function:: get(object_id)
 
-  Retrieve a document of this class object type. Raises
-  ``turbasen.exceptions.DocumentNotFound`` if the document doesn't exist.
+  Retrieve a document of this datatype with the given object id.
+
+.. _instance-methods:
 
 Instance methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: get_data(self, include_common=True, include_extra=False)
+.. py:function:: save()
 
-  Return a dictionary of all data in this document.
-
-  Set ``include_common`` to ``False`` to exclude fields that are common for all
-  objects, returning only fields specific to the current object type.
-
-  Set ``include_extra`` to ``True`` to include unrecognized fields.
+  Save this document. If the document doesn't have an ``_id`` field, it will be
+  assigned.
 
 .. py:function:: delete()
 
-  Delete the current object. It must be saved (ie. have an ``object_id``).
+  Delete this document. It must be saved (ie. have an ``_id`` field).
+
+.. py:function:: get_field(key[, default])
+
+  See `dict.get <https://docs.python.org/3/library/stdtypes.html?#dict.get>`_
+
+.. _document-fields:
+
+Document fields
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Instances are
+`collections <https://docs.python.org/3/library/collections.html>`_, so document
+fields are accessed as keys on a regular ``dict``. All
+`dict methods <https://docs.python.org/3/library/stdtypes.html?#dict>`_ are
+implemented, except for
+`dict.get <https://docs.python.org/3/library/stdtypes.html?#dict.get>`_ which is
+renamed to ``get_field``, see :ref:`instance methods <instance-methods>`.
+
+.. _exceptions:
 
 Exceptions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:class:: turbasen.exceptions.DocumentNotFound
 
-  Thrown when a ``GET`` request for a document with a given object id isn't
-  found
+  Thrown when a request references to a document with an object id that doesn't
+  exist.
 
 .. py:class:: turbasen.exceptions.Unauthorized
 
@@ -201,21 +226,26 @@ Exceptions
 
   Thrown when updating or creating a document with invalid data.
 
-.. _partial-objects:
+.. py:class:: turbasen.exceptions.ServerError
 
-Partial objects
+  Thrown when a request results in a 5xx server error response.
+
+.. _partial-documents:
+
+Partial documents
 -----------------------------
 
-When using ``lookup``, not all document data is retrieved. The objects returned
-are classified as *partial*. On attribute lookup, if the attribute doesn't
-exist, a ``GET`` request is automatically performed under the hood to request
-the entire document, and if the attribute is found on the complete object, it is
-returned as normal.
+Documents returned from calling ``list`` are not complete, but classified as
+*partial*. When accessing a field on a partial document which does not exist,
+a ``GET`` request is automatically performed under the hood to request the
+entire document. If the accessed field now exists, it is returned as normal.
 
-If you know you only need a few fields from a lookup, it may be a good idea to
-specify those in the params field like this:
+If you know you only need a few fields from a ``list`` call, it may be a good
+idea to specify those in the params field like this:
 ``params={'fields': ['field1', 'field2']}`` to avoid performing a ``GET``
-request for each of the objects in your list.
+request for each of the documents in your list.
+
+.. _events:
 
 Events
 -----------------------------

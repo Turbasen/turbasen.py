@@ -1,17 +1,14 @@
-# encoding: utf-8
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 # Import the models we want directly available through the root module
-from .models import (
+from .datatypes import ( # noqa
     Bilde,
     Gruppe,
-    Omrade,
+    Område,
     Sted,
     Tur,
 )
 
 # Make configure directly available through the root module
-from .settings import configure
+from .settings import configure # noqa
 
-# Make handle_available directly available through the root module
-from .events import handle_event
+# Make handle_event available directly available through the root module
+from .events import handle_event # noqa

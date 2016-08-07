@@ -1,3 +1,9 @@
+qa: flake8 test
+
+.PHONY: flake8
+flake8:
+	docker-compose run --rm dev flake8 --config=flake8.cfg --statistics turbasen
+
 .PHONY: test
 test:
 	docker-compose run --rm dev python -m unittest
@@ -13,4 +19,5 @@ publish:
 .PHONY: clean
 clean:
 	python setup.py clean -a
-	find . -name \*.pyc | xargs rm
+	find . -name \*.pyc -delete
+	rm -rf .cache/ dist/ *.egg-info/
