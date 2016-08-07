@@ -30,7 +30,7 @@ Datatypes
 
   `Groups <http://www.nasjonalturbase.no/data/grupper.html>`_
 
-.. py:class:: turbasen.Omrade
+.. py:class:: turbasen.Område
 
   `Areas <http://www.nasjonalturbase.no/data/omrader.html>`_
 

@@ -2,7 +2,7 @@
 from .datatypes import (
     Bilde,
     Gruppe,
-    Omrade,
+    Område,
     Sted,
     Tur,
 )

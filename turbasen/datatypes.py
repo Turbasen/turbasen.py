@@ -6,7 +6,7 @@ class Bilde(NTBObject):
 class Gruppe(NTBObject):
     identifier = 'grupper'
 
-class Omrade(NTBObject):
+class Område(NTBObject):
     identifier = 'områder'
 
 class Sted(NTBObject):

@@ -21,7 +21,7 @@ class ObjectsFixture:
             navngiving='Testdata',
         )
 
-        self.omrade = turbasen.Omrade(
+        self.omrade = turbasen.Område(
             lisens='Privat',
             status='Kladd',
             navn='Testområde',
@@ -83,7 +83,7 @@ class TestClass(unittest.TestCase):
         bilde = turbasen.Bilde.get(self.objects.bilde['_id'])
         sted = turbasen.Sted.get(self.objects.sted['_id'])
         gruppe = turbasen.Gruppe.get(self.objects.gruppe['_id'])
-        omrade = turbasen.Omrade.get(self.objects.omrade['_id'])
+        omrade = turbasen.Område.get(self.objects.omrade['_id'])
         tur = turbasen.Tur.get(self.objects.tur['_id'])
 
         self.assertEqual(bilde['navn'], self.objects.bilde['navn'])
