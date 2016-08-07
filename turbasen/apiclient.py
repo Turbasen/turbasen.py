@@ -5,7 +5,7 @@ import logging
 
 import requests
 
-from .exceptions import DocumentNotFound, Unauthorized, InvalidDocument
+from .exceptions import DocumentNotFound, Unauthorized, InvalidDocument, ServerError
 from .settings import Settings
 from .util import params_to_dotnotation
 from . import events
@@ -392,6 +392,9 @@ class NTBObject(object):
 
         elif request.status_code == 422:
             raise InvalidDocument("HTTP %s: %s" % (request.status_code, response))
+
+        elif request.status_code in range(500, 512):
+            raise ServerError("HTTP %s: %s" % (request.status_code, response))
 
         expected_response = {
             'GET': 200,

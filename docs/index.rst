@@ -201,6 +201,10 @@ Exceptions
 
   Thrown when updating or creating a document with invalid data.
 
+.. py:class:: turbasen.exceptions.ServerError
+
+  Thrown when a request results in a 5xx server error response.
+
 .. _partial-objects:
 
 Partial objects

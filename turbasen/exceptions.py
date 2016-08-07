@@ -9,3 +9,7 @@ class Unauthorized(Exception):
 class InvalidDocument(Exception):
     """Thrown when updating or creating a document with invalid data"""
     pass
+
+class ServerError(Exception):
+    """Thrown when a request results in a 5xx server error response"""
+    pass
