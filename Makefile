@@ -13,4 +13,5 @@ publish:
 .PHONY: clean
 clean:
 	python setup.py clean -a
-	find . -name \*.pyc | xargs rm
+	find . -name \*.pyc -delete
+	rm -rf .cache/ dist/ *.egg-info/
