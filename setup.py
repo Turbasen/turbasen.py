@@ -8,7 +8,7 @@ setup(
     packages=[name],
     version=VERSION,
     description='Client for Nasjonal Turbase REST API',
-    long_description='See https://github.com/Turbasen/turbasen.py/blob/master/README.md',
+    long_description='Documentation: https://turbasenpy.readthedocs.io/',
     author='Ali Kaafarani',
     author_email='ali.kaafarani@dnt.no',
     url='https://github.com/Turbasen/turbasen.py',
