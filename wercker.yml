@@ -7,15 +7,6 @@ build:
   # http://devcenter.wercker.com/docs/steps/index.html
   steps:
     - script:
-        name: virtualenv install
-        code: |
-          pip install virtualenv
-
-    - virtualenv:
-        name: setup virtual environment
-        install_wheel: false
-
-    - script:
       name: install package with requirements
       code: pip install -e .\[dev\]
 
