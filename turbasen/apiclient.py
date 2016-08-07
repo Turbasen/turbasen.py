@@ -140,11 +140,14 @@ class NTBObject(object):
         object_age = datetime.now() - self._saved
         etag_expiry = timedelta(seconds=Settings.ETAG_CACHE_PERIOD)
         if self._etag is not None and object_age < etag_expiry:
-            logger.debug("[_refresh %r]: Object age (%s) is less than ETag cache period (%s), skipping ETag check" % (
-                self,
-                object_age,
-                etag_expiry,
-            ))
+            logger.debug(
+                "[_refresh %r]: Object age (%s) is less than ETag cache period (%s), skipping ETag "
+                "check" % (
+                    self,
+                    object_age,
+                    etag_expiry,
+                )
+            )
             return
 
         logger.debug("[_refresh %r]: ETag cache expired, retrieving document" % self)
@@ -168,8 +171,8 @@ class NTBObject(object):
         else:
             headers, document = self._post()
 
-        # Note that we're resetting all fields here. The main reason is to reset the etag and update metadata fields,
-        # and although all other fields are reset, they should return as they were.
+        # Note that we're resetting all fields here. The main reason is to reset the etag and update
+        # metadata fields, and although all other fields are reset, they should return as they were.
         self._set_fields(etag="\"%s\"" % document['checksum'], fields=document)
 
     def delete(self):
@@ -197,7 +200,9 @@ class NTBObject(object):
             )
 
         if request.status_code != 204:
-            logger.warning("Turbasen returned status code %s on DELETE; expected 204" % request.status_code)
+            logger.warning(
+                "Turbasen returned status code %s on DELETE; expected 204" % request.status_code
+            )
 
         Settings.CACHE.delete('turbasen.object.%s' % self['_id'])
         del self['_id']
@@ -217,7 +222,8 @@ class NTBObject(object):
         )
         if request.status_code in [400, 422]:
             raise InvalidDocument(
-                "Turbasen returned status code %s with the message: \"%s\" and the following errors: \"%s\"" % (
+                "Turbasen returned status code %s with the message: \"%s\" and the following "
+                "errors: \"%s\"" % (
                     request.status_code,
                     request.json()['message'],
                     request.json().get('errors', ''),
@@ -232,7 +238,9 @@ class NTBObject(object):
             )
 
         if request.status_code != 201:
-            logger.warning("Turbasen returned status code %s on POST; expected 201" % request.status_code)
+            logger.warning(
+                "Turbasen returned status code %s on POST; expected 201" % request.status_code
+            )
 
         for warning in request.json().get('warnings', []):
             logger.warning("Turbasen POST warning: %s" % warning)
@@ -254,7 +262,8 @@ class NTBObject(object):
         )
         if request.status_code in [400, 422]:
             raise InvalidDocument(
-                "Turbasen returned status code %s with the message: \"%s\" and the following errors: \"%s\"" % (
+                "Turbasen returned status code %s with the message: \"%s\" and the following "
+                "errors: \"%s\"" % (
                     request.status_code,
                     request.json()['message'],
                     request.json().get('errors', ''),
@@ -276,7 +285,9 @@ class NTBObject(object):
             )
 
         if request.status_code != 200:
-            logger.warning("Turbasen returned status code %s on PUT; expected 200" % request.status_code)
+            logger.warning(
+                "Turbasen returned status code %s on PUT; expected 200" % request.status_code
+            )
 
         for warning in request.json().get('warnings', []):
             logger.warning("Turbasen PUT warning: %s" % warning)
@@ -292,17 +303,24 @@ class NTBObject(object):
         """Retrieve a single object from Turbasen by its object id"""
         object = Settings.CACHE.get('turbasen.object.%s' % object_id)
         if object is None:
-            logger.debug("[get %s/%s]: Not in local cache, performing GET request..." % (cls.identifier, object_id))
+            logger.debug("[get %s/%s]: Not in local cache, performing GET request..." % (
+                cls.identifier,
+                object_id,
+            ))
             headers, document = NTBObject._get_document(cls.identifier, object_id)
             return cls(_etag=headers['etag'], **document)
         else:
-            logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (cls.identifier, object_id))
+            logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (
+                cls.identifier,
+                object_id,
+            ))
             object._refresh()
             return object
 
     @staticmethod
     def _get_document(identifier, object_id, etag=None):
-        # Handle the special case of empty object_id provided; the resulting request would have returned a list lookup
+        # Handle the special case of empty object_id provided; the resulting request would have
+        # returned a list lookup
         if object_id == '':
             raise DocumentNotFound("No documents have an empty object id")
 
@@ -322,7 +340,10 @@ class NTBObject(object):
             return None
         elif request.status_code in [400, 404]:
             raise DocumentNotFound(
-                "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (identifier, object_id)
+                "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (
+                    identifier,
+                    object_id,
+                )
             )
         elif request.status_code in [401, 403]:
             raise Unauthorized(
@@ -333,7 +354,9 @@ class NTBObject(object):
             )
 
         if request.status_code != 200:
-            logger.warning("Turbasen returned status code %s on GET; expected 200" % request.status_code)
+            logger.warning(
+                "Turbasen returned status code %s on GET; expected 200" % request.status_code
+            )
 
         return request.headers, request.json()
 
@@ -347,12 +370,12 @@ class NTBObject(object):
         Retrieve a complete list of these objects, partially fetched.
         Arguments:
         - pages: Positive integer
-            Optionally set to positive integer to limit the amount of pages iterated. `settings.LIMIT` decides the
-            amount of objects per page.
+            Optionally set to positive integer to limit the amount of pages iterated.
+            `settings.LIMIT` decides the amount of objects per page.
         - params: Dictionary
-            Add API filter parameters. Note the special parameter 'fields' which can be used to include more fields in
-            the partial objects. The following params are reserved for internal pagination:
-            'limit', 'skip'
+            Add API filter parameters. Note the special parameter 'fields' which can be used to
+            include more fields in the partial objects. The following params are reserved for
+            internal pagination: 'limit', 'skip'
         """
         params = params_to_dotnotation(params.copy())
 
@@ -360,8 +383,9 @@ class NTBObject(object):
         if 'fields' in params and type(params['fields']) != list:
             params['fields'] = [params['fields']]
 
-        # Create a cache key with the dict's hash. Ensure the 'fields' iterable is a tuple, which is hashable. Use a
-        # copy to avoid mutating the original dict, where we prefer to keep the unhashable list.
+        # Create a cache key with the dict's hash. Ensure the 'fields' iterable is a tuple, which is
+        # hashable. Use a copy to avoid mutating the original dict, where we prefer to keep the
+        # unhashable list.
         params_copy = params.copy()
         if 'fields' in params_copy:
             params_copy['fields'] = tuple(params_copy['fields'])
@@ -370,7 +394,10 @@ class NTBObject(object):
 
         objects = Settings.CACHE.get(cache_key)
         if objects is None:
-            logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (cls.identifier, pages))
+            logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (
+                cls.identifier,
+                pages,
+            ))
             objects = list(NTBObject.NTBIterator(cls, pages, params))
             Settings.CACHE.set(cache_key, objects, Settings.CACHE_LOOKUP_PERIOD)
         else:
@@ -423,7 +450,10 @@ class NTBObject(object):
             params['skip'] = self.bulk_index
 
             events.trigger('api.get_objects')
-            request = requests.get('%s/%s' % (Settings.ENDPOINT_URL, self.cls.identifier), params=params)
+            request = requests.get(
+                '%s/%s' % (Settings.ENDPOINT_URL, self.cls.identifier),
+                params=params,
+            )
             if request.status_code in [401, 403]:
                 raise Unauthorized(
                     "Turbasen returned status code %s with the message: \"%s\"" % (

@@ -11,6 +11,10 @@ build:
       code: pip install -e .\[dev\]
 
     - script:
+        name: run flake8
+        code: flake8 --config=flake8.cfg --statistics turbasen
+
+    - script:
         name: run tests
         code: python -m unittest
 

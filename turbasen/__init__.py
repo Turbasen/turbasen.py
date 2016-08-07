@@ -1,5 +1,5 @@
 # Import the models we want directly available through the root module
-from .datatypes import (
+from .datatypes import ( # noqa
     Bilde,
     Gruppe,
     Område,
@@ -8,7 +8,7 @@ from .datatypes import (
 )
 
 # Make configure directly available through the root module
-from .settings import configure
+from .settings import configure # noqa
 
 # Make handle_available directly available through the root module
-from .events import handle_event
+from .events import handle_event # noqa
