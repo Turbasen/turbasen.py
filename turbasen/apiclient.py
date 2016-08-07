@@ -118,6 +118,7 @@ class NTBObject(object):
     def _fetch(self):
         """For partial objects: Retrieve and set all document fields"""
         assert '_id' in self
+        assert self._is_partial
 
         object = Settings.CACHE.get('turbasen.object.%s' % self['_id'])
         if object is None:
