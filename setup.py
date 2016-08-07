@@ -26,6 +26,6 @@ setup(
     ],
     install_requires=['requests>=2.10.0,<3'],
     extras_require={
-        'dev': ['ipython'],
+        'dev': ['ipython', 'flake8'],
     }
 )

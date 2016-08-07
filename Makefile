@@ -1,3 +1,9 @@
+qa: flake8 test
+
+.PHONY: flake8
+flake8:
+	docker-compose run --rm dev flake8 --config=flake8.cfg --statistics turbasen
+
 .PHONY: test
 test:
 	docker-compose run --rm dev python -m unittest
