@@ -14,6 +14,8 @@ from . import events
 logger = logging.getLogger('turbasen')
 
 class NTBObject(UserDict):
+    """Base class for Turbasen datatypes. Subclasses must define the `identifier` attribute.
+    NTBObject subclasses UserDict in order to act as a collection for document fields."""
     def __init__(self, _is_partial=False, _etag=None, **fields):
         super().__init__(self)
         self._is_partial = _is_partial
@@ -272,8 +274,15 @@ class NTBObject(UserDict):
         return objects
 
     class NTBIterator:
-        """Document iterator"""
-        DEFAULT_FIELDS = ['navn', 'checksum', 'endret', 'status'] # Include checksum (etag)
+        """Iterates a paginated document resultset from Turbasen"""
+        DEFAULT_FIELDS = [
+            # Add some reasonable default fields
+            'navn',
+            'endret',
+            'status',
+            # Add the checksum as well, for internal ETag handling
+            'checksum',
+        ]
 
         def __init__(self, cls, pages, params):
             self.cls = cls
@@ -336,6 +345,8 @@ class NTBObject(UserDict):
 
     @staticmethod
     def _handle_response(request, method):
+        """Handle responses from the API, logging warnings and raising any appropriate exception
+        according to the HTTP status code"""
         try:
             response = request.json()
         except JSONDecodeError:
