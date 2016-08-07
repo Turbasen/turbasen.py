@@ -10,5 +10,5 @@ from .datatypes import ( # noqa
 # Make configure directly available through the root module
 from .settings import configure # noqa
 
-# Make handle_available directly available through the root module
+# Make handle_event available directly available through the root module
 from .events import handle_event # noqa
