@@ -1,3 +1,4 @@
+from collections import UserDict
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 import json
@@ -12,10 +13,10 @@ from . import events
 
 logger = logging.getLogger('turbasen')
 
-class NTBObject(object):
+class NTBObject(UserDict):
     def __init__(self, _is_partial=False, _etag=None, **fields):
+        super().__init__(self)
         self._is_partial = _is_partial
-        self._fields = {}
         self._set_fields(_etag, fields)
 
     def __repr__(self):
@@ -40,14 +41,11 @@ class NTBObject(object):
     # Fields container API
     #
 
-    def __len__(self):
-        return len(self._fields)
-
     def __getitem__(self, key):
         """Return the field with the given key. If the key is missing and this is a partial object,
         fetch remaining fields and retry."""
         try:
-            return self._fields[key]
+            return self.data[key]
         except KeyError:
             # If the key is missing on a partial object; fetch all fields and retry
             if self._is_partial and '_id' in self:
@@ -60,47 +58,9 @@ class NTBObject(object):
             else:
                 raise
 
-    def __setitem__(self, key, value):
-        self._fields[key] = value
-
-    def __delitem__(self, key):
-        del self._fields[key]
-
-    def __contains__(self, item):
-        return item in self._fields
-
-    def __iter__(self):
-        return iter(self._fields)
-
-    def clear(self, *args, **kwargs):
-        return self._fields.clear(*args, **kwargs)
-
-    def copy(self, *args, **kwargs):
-        return self._fields.copy(*args, **kwargs)
-
     def get_field(self, *args, **kwargs):
-        return self._fields.get(*args, **kwargs)
-
-    def items(self, *args, **kwargs):
-        return self._fields.items(*args, **kwargs)
-
-    def keys(self, *args, **kwargs):
-        return self._fields.keys(*args, **kwargs)
-
-    def pop(self, *args, **kwargs):
-        return self._fields.pop(*args, **kwargs)
-
-    def popitem(self, *args, **kwargs):
-        return self._fields.popitem(*args, **kwargs)
-
-    def setdefault(self, *args, **kwargs):
-        return self._fields.setdefault(*args, **kwargs)
-
-    def update(self, *args, **kwargs):
-        return self._fields.update(*args, **kwargs)
-
-    def values(self, *args, **kwargs):
-        return self._fields.values(*args, **kwargs)
+        """Renamed accessor for `dict.get`, because `get` is already in use in our subclass"""
+        return self.data.get(*args, **kwargs)
 
     def _set_fields(self, etag, fields):
         """Assign a dict of fields on this object, along with an optional etag"""
@@ -199,7 +159,7 @@ class NTBObject(object):
             '%s/%s' % (Settings.ENDPOINT_URL, self.identifier),
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
-            data=json.dumps(self._fields),
+            data=json.dumps(self.data),
         )
         NTBObject._handle_response(request, 'POST')
         return request.headers, request.json()['document']
@@ -214,7 +174,7 @@ class NTBObject(object):
             '%s/%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self['_id']),
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
-            data=json.dumps(self._fields),
+            data=json.dumps(self.data),
         )
         NTBObject._handle_response(request, 'PUT')
         return request.headers, request.json()['document']
