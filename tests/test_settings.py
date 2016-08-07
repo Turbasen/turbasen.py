@@ -11,4 +11,4 @@ class TestClass(unittest.TestCase):
         self.assertEqual(turbasen.settings.Settings.LIMIT, 30)
 
     def test_api_key(self):
-        self.assertEqual(turbasen.settings.Settings.API_KEY, os.environ.get('API_KEY'))
+        self.assertEqual(turbasen.settings.Settings.API_KEY, os.environ.get('API_KEY', ''))

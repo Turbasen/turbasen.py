@@ -77,7 +77,7 @@ Settings
 ``ETAG_CACHE_PERIOD = 60 * 60``
   Number of seconds to ignore ``Etag`` checks and use local cache blindly.
 
-``API_KEY = os.environ.get('API_KEY')``
+``API_KEY = os.environ.get('API_KEY', '')``
   API key is currently required for access.
 
 

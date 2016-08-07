@@ -174,10 +174,7 @@ class NTBObject(object):
     def delete(self):
         assert '_id' in self
 
-        params = {}
-        if Settings.API_KEY is not None:
-            params['api_key'] = Settings.API_KEY
-
+        params = {'api_key': Settings.API_KEY}
         events.trigger('api.delete_object')
         request = requests.delete(
             '%s/%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self['_id']),
@@ -208,10 +205,7 @@ class NTBObject(object):
     def _post(self):
         assert not self._is_partial
 
-        params = {}
-        if Settings.API_KEY is not None:
-            params['api_key'] = Settings.API_KEY
-
+        params = {'api_key': Settings.API_KEY}
         events.trigger('api.post_object')
         request = requests.post(
             '%s/%s' % (Settings.ENDPOINT_URL, self.identifier),
@@ -248,10 +242,7 @@ class NTBObject(object):
         assert '_id' in self
         assert not self._is_partial
 
-        params = {}
-        if Settings.API_KEY is not None:
-            params['api_key'] = Settings.API_KEY
-
+        params = {'api_key': Settings.API_KEY}
         events.trigger('api.put_object')
         request = requests.put(
             '%s/%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self['_id']),
@@ -354,9 +345,7 @@ class NTBObject(object):
         if object_id == '':
             raise DocumentNotFound("No documents have an empty object id")
 
-        params = {}
-        if Settings.API_KEY is not None:
-            params['api_key'] = Settings.API_KEY
+        params = {'api_key': Settings.API_KEY}
 
         headers = {}
         if etag is not None:
@@ -429,12 +418,12 @@ class NTBObject(object):
         def lookup_bulk(self):
             params = self.params
 
+            # API key
+            params['api_key'] = Settings.API_KEY
+
             # Set pagination parameters
             params['limit'] = Settings.LIMIT
             params['skip'] = self.bulk_index
-
-            if Settings.API_KEY is not None:
-                params['api_key'] = Settings.API_KEY
 
             events.trigger('api.get_objects')
             request = requests.get('%s/%s' % (Settings.ENDPOINT_URL, self.cls.identifier), params=params)

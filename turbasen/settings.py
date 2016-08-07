@@ -9,7 +9,7 @@ class Settings:
     CACHE_LOOKUP_PERIOD = 60 * 60 * 24
     CACHE_GET_PERIOD = 60 * 60 * 24 * 30
     ETAG_CACHE_PERIOD = 60 * 60
-    API_KEY = os.environ.get('API_KEY')
+    API_KEY = os.environ.get('API_KEY', '')
 
 def configure(**settings):
     for key, value in settings.items():
