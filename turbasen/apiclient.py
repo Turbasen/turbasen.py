@@ -4,7 +4,6 @@ import logging
 
 import requests
 
-from .decorators import requires_object_id, requires_not_partial
 from .exceptions import DocumentNotFound, Unauthorized, InvalidDocument
 from .settings import Settings
 from .util import params_to_dotnotation
@@ -116,9 +115,10 @@ class NTBObject(object):
     # Data retrieval from Turbasen
     #
 
-    @requires_object_id
     def _fetch(self):
         """For partial objects: Retrieve and set all document fields"""
+        assert '_id' in self
+
         object = Settings.CACHE.get('turbasen.object.%s' % self['_id'])
         if object is None:
             logger.debug("[_fetch %s/%s]: Not in local cache, performing GET request..." % (self.identifier, self['_id']))
@@ -131,10 +131,11 @@ class NTBObject(object):
             self._set_fields(etag=object._etag, fields=object.items())
             self._refresh()
 
-    @requires_object_id
-    @requires_not_partial
     def _refresh(self):
         """Refreshes the object if the ETag cache period is expired and the object is modified"""
+        assert '_id' in self
+        assert not self._is_partial
+
         if self._etag is not None and self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
             logger.debug("[_refresh %s]: Object is younger than ETag cache period (%s), skipping ETag check" % (
                 self['_id'],
@@ -158,8 +159,9 @@ class NTBObject(object):
     # Data push to Turbasen
     #
 
-    @requires_not_partial
     def save(self):
+        assert not self._is_partial
+
         if '_id' in self:
             headers, document = self._put()
         else:
@@ -169,8 +171,9 @@ class NTBObject(object):
         # and although all other fields are reset, they should return as they were.
         self._set_fields(etag="\"%s\"" % document['checksum'], fields=document)
 
-    @requires_object_id
     def delete(self):
+        assert '_id' in self
+
         params = {}
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
@@ -202,8 +205,9 @@ class NTBObject(object):
         del self['_id']
         return request.headers
 
-    @requires_not_partial
     def _post(self):
+        assert not self._is_partial
+
         params = {}
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
@@ -240,9 +244,10 @@ class NTBObject(object):
 
         return request.headers, request.json()['document']
 
-    @requires_object_id
-    @requires_not_partial
     def _put(self):
+        assert '_id' in self
+        assert not self._is_partial
+
         params = {}
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
