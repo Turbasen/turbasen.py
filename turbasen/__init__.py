@@ -1,5 +1,5 @@
 # Import the models we want directly available through the root module
-from .models import (
+from .datatypes import (
     Bilde,
     Gruppe,
     Omrade,
