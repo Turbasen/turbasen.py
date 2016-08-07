@@ -2,7 +2,17 @@ import os
 
 from .cache import DummyCache
 
-class Settings:
+class MetaSettings(type):
+    """Implements reprentation for the Settings singleton, displaying all settings and values"""
+    def __repr__(cls):
+        settings = [
+            '%s=%s' % (name, getattr(cls, name))
+            for name in dir(cls)
+            if not name.startswith('_')
+        ]
+        return '<%s: %s>' % (cls.__name__, ', '.join(settings))
+
+class Settings(metaclass=MetaSettings):
     ENDPOINT_URL = os.environ.get('ENDPOINT_URL', 'https://api.nasjonalturbase.no')
     LIMIT = 20
     CACHE = DummyCache()
