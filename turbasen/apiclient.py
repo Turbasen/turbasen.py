@@ -36,7 +36,7 @@ class NTBObject(object):
         return self['_id'] == other['_id']
 
     #
-    # Container implementation
+    # Fields container API
     #
 
     def __len__(self):
@@ -112,7 +112,7 @@ class NTBObject(object):
             logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self['_id'], self._etag))
 
     #
-    # Data retrieval from Turbasen
+    # Object instance handling
     #
 
     def _fetch(self):
@@ -133,7 +133,7 @@ class NTBObject(object):
             self._refresh()
 
     def _refresh(self):
-        """Refreshes the object if the ETag cache period is expired and the object is modified"""
+        """Based on object age, perform an ETag check, re-retrieving fields if object is modified"""
         assert '_id' in self
         assert not self._is_partial
 
@@ -152,13 +152,10 @@ class NTBObject(object):
             self._saved = datetime.now()
             Settings.CACHE.set('turbasen.object.%s' % self['_id'], self, Settings.CACHE_GET_PERIOD)
         else:
+            # Document was modified, set new etag and fields
             logger.debug("[_refresh %s]: Document was modified, resetting fields..." % self['_id'])
             headers, document = result
             self._set_fields(etag=headers['etag'], fields=document)
-
-    #
-    # Data push to Turbasen
-    #
 
     def save(self):
         assert not self._is_partial
@@ -284,7 +281,7 @@ class NTBObject(object):
         return request.headers, request.json()['document']
 
     #
-    # Public static data retrieval methods
+    # Single document lookup
     #
 
     @classmethod
@@ -299,46 +296,6 @@ class NTBObject(object):
             logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (cls.identifier, object_id))
             object._refresh()
             return object
-
-    @classmethod
-    def lookup(cls, pages=None, params=dict()):
-        """
-        Retrieve a complete list of these objects, partially fetched.
-        Arguments:
-        - pages: Positive integer
-            Optionally set to positive integer to limit the amount of pages iterated. `settings.LIMIT` decides the
-            amount of objects per page.
-        - params: Dictionary
-            Add API filter parameters. Note the special parameter 'fields' which can be used to include more fields in
-            the partial objects. The following params are reserved for internal pagination:
-            'limit', 'skip'
-        """
-        params = params_to_dotnotation(params.copy())
-
-        # If the 'fields' parameter contains a single value, wrap it in a list
-        if 'fields' in params and type(params['fields']) != list:
-            params['fields'] = [params['fields']]
-
-        # Create a cache key with the dict's hash. Ensure the 'fields' iterable is a tuple, which is hashable. Use a
-        # copy to avoid mutating the original dict, where we prefer to keep the unhashable list.
-        params_copy = params.copy()
-        if 'fields' in params_copy:
-            params_copy['fields'] = tuple(params_copy['fields'])
-        params_key = hash(frozenset(params_copy.items()))
-        cache_key = 'turbasen.objects.%s.%s.%s' % (cls.identifier, pages, params_key)
-
-        objects = Settings.CACHE.get(cache_key)
-        if objects is None:
-            logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (cls.identifier, pages))
-            objects = list(NTBObject.NTBIterator(cls, pages, params))
-            Settings.CACHE.set(cache_key, objects, Settings.CACHE_LOOKUP_PERIOD)
-        else:
-            logger.debug("[lookup %s (pages=%s)]: Retrieved from cache" % (cls.identifier, pages))
-        return objects
-
-    #
-    # Internal static data retrieval methods
-    #
 
     @staticmethod
     def _get_document(identifier, object_id, etag=None):
@@ -378,8 +335,44 @@ class NTBObject(object):
         return request.headers, request.json()
 
     #
-    # Internal utilities
+    # List lookup
     #
+
+    @classmethod
+    def lookup(cls, pages=None, params=dict()):
+        """
+        Retrieve a complete list of these objects, partially fetched.
+        Arguments:
+        - pages: Positive integer
+            Optionally set to positive integer to limit the amount of pages iterated. `settings.LIMIT` decides the
+            amount of objects per page.
+        - params: Dictionary
+            Add API filter parameters. Note the special parameter 'fields' which can be used to include more fields in
+            the partial objects. The following params are reserved for internal pagination:
+            'limit', 'skip'
+        """
+        params = params_to_dotnotation(params.copy())
+
+        # If the 'fields' parameter contains a single value, wrap it in a list
+        if 'fields' in params and type(params['fields']) != list:
+            params['fields'] = [params['fields']]
+
+        # Create a cache key with the dict's hash. Ensure the 'fields' iterable is a tuple, which is hashable. Use a
+        # copy to avoid mutating the original dict, where we prefer to keep the unhashable list.
+        params_copy = params.copy()
+        if 'fields' in params_copy:
+            params_copy['fields'] = tuple(params_copy['fields'])
+        params_key = hash(frozenset(params_copy.items()))
+        cache_key = 'turbasen.objects.%s.%s.%s' % (cls.identifier, pages, params_key)
+
+        objects = Settings.CACHE.get(cache_key)
+        if objects is None:
+            logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (cls.identifier, pages))
+            objects = list(NTBObject.NTBIterator(cls, pages, params))
+            Settings.CACHE.set(cache_key, objects, Settings.CACHE_LOOKUP_PERIOD)
+        else:
+            logger.debug("[lookup %s (pages=%s)]: Retrieved from cache" % (cls.identifier, pages))
+        return objects
 
     class NTBIterator:
         """Document iterator"""
