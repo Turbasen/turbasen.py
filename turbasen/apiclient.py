@@ -318,7 +318,8 @@ class NTBObject(object):
             amount of objects per page.
         - params: Dictionary
             Add API filter parameters. Note the special parameter 'fields' which can be used to include more fields in
-            the partial objects. Note also that the following params will not be included: 'limit', 'status', 'tilbyder'
+            the partial objects. The following params are reserved for internal pagination:
+            'limit', 'skip'
         """
         params = params_to_dotnotation(params.copy())
 
@@ -428,10 +429,8 @@ class NTBObject(object):
         def lookup_bulk(self):
             params = self.params
 
-            # Set our default params, overwriting any duplicates
+            # Set pagination parameters
             params['limit'] = Settings.LIMIT
-            params['status'] = 'Offentlig'  # Ignore Kladd, Privat, og Slettet
-            params['tilbyder'] = 'DNT'      # Future proofing, there might be other objects
             params['skip'] = self.bulk_index
 
             if Settings.API_KEY is not None:
