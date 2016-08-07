@@ -109,7 +109,7 @@ class NTBObject(object):
 
         if '_id' in self and self._etag is not None and not self._is_partial:
             Settings.CACHE.set('turbasen.object.%s' % self['_id'], self, Settings.CACHE_GET_PERIOD)
-            logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self['_id'], self._etag))
+            logger.debug("[_set_fields %r]: Saved and cached with ETag: %s" % (self, self._etag))
 
     #
     # Object instance handling
@@ -122,12 +122,12 @@ class NTBObject(object):
 
         object = Settings.CACHE.get('turbasen.object.%s' % self['_id'])
         if object is None:
-            logger.debug("[_fetch %s/%s]: Not in local cache, performing GET request..." % (self.identifier, self['_id']))
+            logger.debug("[_fetch %r]: Not in local cache, retrieving document" % self)
             headers, document = NTBObject._get_document(self.identifier, self['_id'])
             self._is_partial = False
             self._set_fields(etag=headers['etag'], fields=document)
         else:
-            logger.debug("[_fetch %s/%s]: Retrieved cached object, updating and refreshing..." % (self.identifier, self['_id']))
+            logger.debug("[_fetch %r]: Retrieved cached object, updating and refreshing" % self)
             self._is_partial = False
             self._set_fields(etag=object._etag, fields=object.items())
             self._refresh()
@@ -137,23 +137,26 @@ class NTBObject(object):
         assert '_id' in self
         assert not self._is_partial
 
-        if self._etag is not None and self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
-            logger.debug("[_refresh %s]: Object is younger than ETag cache period (%s), skipping ETag check" % (
-                self['_id'],
-                Settings.ETAG_CACHE_PERIOD,
+        object_age = datetime.now() - self._saved
+        etag_expiry = timedelta(seconds=Settings.ETAG_CACHE_PERIOD)
+        if self._etag is not None and object_age < etag_expiry:
+            logger.debug("[_refresh %r]: Object age (%s) is less than ETag cache period (%s), skipping ETag check" % (
+                self,
+                object_age,
+                etag_expiry,
             ))
             return
 
-        logger.debug("[_refresh %s]: ETag cache period expired, performing request..." % self['_id'])
+        logger.debug("[_refresh %r]: ETag cache expired, retrieving document" % self)
         result = NTBObject._get_document(self.identifier, self['_id'], self._etag)
         if result is None:
             # Document is not modified, reset the etag check timeout
-            logger.debug("[_refresh %s]: Document was not modified" % self['_id'])
+            logger.debug("[_refresh %r]: Document was not modified" % self)
             self._saved = datetime.now()
             Settings.CACHE.set('turbasen.object.%s' % self['_id'], self, Settings.CACHE_GET_PERIOD)
         else:
             # Document was modified, set new etag and fields
-            logger.debug("[_refresh %s]: Document was modified, resetting fields..." % self['_id'])
+            logger.debug("[_refresh %r]: Document was modified, resetting fields" % self)
             headers, document = result
             self._set_fields(etag=headers['etag'], fields=document)
 
