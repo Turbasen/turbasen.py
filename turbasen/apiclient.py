@@ -13,130 +13,104 @@ from . import events
 logger = logging.getLogger('turbasen')
 
 class NTBObject(object):
-    COMMON_FIELDS = [
-        'lisens',
-        'navngiving',
-        'status',
-        'navn',
-        'privat',
-    ]
-
-    COMMON_FIELDS_READONLY = [
-        'tilbyder',
-        'endret',
-        'checksum',
-    ]
-
-    def __init__(self, _meta={}, **fields):
-        self.object_id = _meta.get('id')
-        self._is_partial = _meta.get('is_partial', False)
-        self._extra = {}
-        self._set_data(_meta.get('etag'), fields)
+    def __init__(self, _is_partial=False, _etag=None, **fields):
+        self._is_partial = _is_partial
+        self._fields = {}
+        self._set_fields(_etag, fields)
 
     def __repr__(self):
-        # Since repr may be called during an AttributeError, we have to avoid __getattr__ when seeing if object_id and
-        # navn are available, or we might end up in an infinite loop. It's not catchable, because fetch would raise an
-        # AttributeError, which would try to build a representation, which would try to get an unavailable attribute,
-        # and so on.
-        try:
-            object_id = self.__getattribute__('object_id')
-        except AttributeError:
-            object_id = '?'
-
-        try:
-            navn = self.__getattribute__('navn')
-        except AttributeError:
-            navn = '?'
-
-        return '<%s: %s%s: %s>' % (self.__class__.__name__, object_id, ' (partial)' if self._is_partial else '', navn)
+        return '<%s: %s%s: %s>' % (
+            self.__class__.__name__,
+            self.get_field('_id', '?'),
+            ' (partial)' if self._is_partial else '',
+            self.get_field('navn', '?'),
+        )
 
     def __eq__(self, other):
         """Object equality relies on the object id being defined, and equal"""
         if type(self) != type(other):
             return False
 
-        if not self.object_id:
+        if '_id' not in self or '_id' not in other:
             return False
 
-        return self.object_id == other.object_id
+        return self['_id'] == other['_id']
 
     #
-    # Attribute manipulation
-    # - Partial objects have not all attributes assigned; when one is accessed, retrieve the entire document first
+    # Container implementation
     #
 
-    def __getattr__(self, name):
-        """
-        On attribute lookup failure, if the object is only partially retrieved, get the rest of its data and try again.
-        Note that this method is only called whenever an attribute lookup *fails*.
-        """
+    def __len__(self):
+        return len(self._fields)
 
-        # Verify that _is_partial (which is always set in __init__) actually is set. If not, we might be in some
-        # low-level cache serialization state, in which case we don't want to apply our custom logic but just raise
-        # the AttributeError.
+    def __getitem__(self, key):
+        """Return the field with the given key. If the key is missing and this is a partial object,
+        fetch remaining fields and retry."""
         try:
-            self.__getattribute__('_is_partial')
-        except AttributeError:
-            raise
+            return self._fields[key]
+        except KeyError:
+            # If the key is missing on a partial object; fetch all fields and retry
+            if self._is_partial and '_id' in self:
+                logger.debug("[getitem %r.%s]: KeyError on partial object; fetching document" % (
+                    self,
+                    key,
+                ))
+                self._fetch()
+                return self[key]
+            else:
+                raise
 
-        if self._is_partial and self.object_id is not None and not name.startswith('_'):
-            # Note that we're ignoring internal non-existing attributes, which can occur in various situations, e.g.
-            # when serializing for caching.
-            logger.debug("[getattr %s.%s]: Accessed non-existing attribute on partial object; fetching document..." % (
-                self.object_id,
-                name,
-            ))
-            self._fetch()
-            return getattr(self, name)
-        else:
-            raise AttributeError("'%s' object has no attribute '%s'" % (self, name))
+    def __setitem__(self, key, value):
+        self._fields[key] = value
 
-    #
-    # Internal data handling
-    #
+    def __delitem__(self, key):
+        del self._fields[key]
 
-    def get_data(self, include_common=True, include_extra=False):
-        """
-        Returns a dict of all data fields on this object. Set include_common to False to only return fields specific
-        to this datatype. Set include_extra to False to exclude fields not recognized in our data model.
-        """
-        field_names = self.FIELDS.copy()
-        if include_common:
-            field_names += NTBObject.COMMON_FIELDS
-        data = {
-            field: getattr(self, field)
-            for field in field_names
-            if hasattr(self, field) and getattr(self, field) is not None
-        }
-        if include_extra:
-            data.update(self._extra)
-        return data
+    def __contains__(self, item):
+        return item in self._fields
 
-    def _set_data(self, etag, fields):
-        """Save the given data on this object"""
+    def __iter__(self):
+        return iter(self._fields)
+
+    def clear(self, *args, **kwargs):
+        return self._fields.clear(*args, **kwargs)
+
+    def copy(self, *args, **kwargs):
+        return self._fields.copy(*args, **kwargs)
+
+    def get_field(self, *args, **kwargs):
+        return self._fields.get(*args, **kwargs)
+
+    def items(self, *args, **kwargs):
+        return self._fields.items(*args, **kwargs)
+
+    def keys(self, *args, **kwargs):
+        return self._fields.keys(*args, **kwargs)
+
+    def pop(self, *args, **kwargs):
+        return self._fields.pop(*args, **kwargs)
+
+    def popitem(self, *args, **kwargs):
+        return self._fields.popitem(*args, **kwargs)
+
+    def setdefault(self, *args, **kwargs):
+        return self._fields.setdefault(*args, **kwargs)
+
+    def update(self, *args, **kwargs):
+        return self._fields.update(*args, **kwargs)
+
+    def values(self, *args, **kwargs):
+        return self._fields.values(*args, **kwargs)
+
+    def _set_fields(self, etag, fields):
+        """Assign a dict of fields on this object, along with an optional etag"""
         self._etag = etag
         self._saved = datetime.now()
+        self.update(fields)
 
-        if '_id' in fields:
-            new_object_id = fields.pop('_id')
-            if self.object_id is not None and self.object_id != new_object_id:
-                logger.warning("Replacing old object id '%s' with new object id '%s'" % (self.object_id, new_object_id))
-            self.object_id = new_object_id
-
-        for key, value in fields.items():
-            if key in self.FIELDS:
-                # Expected data fields
-                setattr(self, key, value)
-            elif key in NTBObject.COMMON_FIELDS + NTBObject.COMMON_FIELDS_READONLY:
-                # Expected common metadata
-                setattr(self, key, value)
-            else:
-                # Unexpected extra attributes - group in the 'extra' dictionary
-                self._extra[key] = value
-
-        if self.object_id is not None and etag is not None and not self._is_partial:
-            Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
-            logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self.object_id, self._etag))
+        if '_id' in self and self._etag is not None and not self._is_partial:
+            Settings.CACHE.set('turbasen.object.%s' % self['_id'], self, Settings.CACHE_GET_PERIOD)
+            logger.debug("[set %s/%s]: Saved and cached with ETag: %s" % (self.identifier, self['_id'], self._etag))
 
     #
     # Data retrieval from Turbasen
@@ -145,16 +119,16 @@ class NTBObject(object):
     @requires_object_id
     def _fetch(self):
         """For partial objects: Retrieve and set all document fields"""
-        object = Settings.CACHE.get('turbasen.object.%s' % self.object_id)
+        object = Settings.CACHE.get('turbasen.object.%s' % self['_id'])
         if object is None:
-            logger.debug("[_fetch %s/%s]: Not in local cache, performing GET request..." % (self.identifier, self.object_id))
-            headers, document = NTBObject._get_document(self.identifier, self.object_id)
+            logger.debug("[_fetch %s/%s]: Not in local cache, performing GET request..." % (self.identifier, self['_id']))
+            headers, document = NTBObject._get_document(self.identifier, self['_id'])
             self._is_partial = False
-            self._set_data(etag=headers['etag'], fields=document)
+            self._set_fields(etag=headers['etag'], fields=document)
         else:
-            logger.debug("[_fetch %s/%s]: Retrieved cached object, updating and refreshing..." % (self.identifier, self.object_id))
+            logger.debug("[_fetch %s/%s]: Retrieved cached object, updating and refreshing..." % (self.identifier, self['_id']))
             self._is_partial = False
-            self._set_data(etag=object._etag, fields=object.get_data())
+            self._set_fields(etag=object._etag, fields=object.items())
             self._refresh()
 
     @requires_object_id
@@ -162,39 +136,38 @@ class NTBObject(object):
     def _refresh(self):
         """Refreshes the object if the ETag cache period is expired and the object is modified"""
         if self._etag is not None and self._saved + timedelta(seconds=Settings.ETAG_CACHE_PERIOD) > datetime.now():
-            logger.debug("[refresh %s]: Object is younger than ETag cache period (%s), skipping ETag check" % (
-                self.object_id,
+            logger.debug("[_refresh %s]: Object is younger than ETag cache period (%s), skipping ETag check" % (
+                self['_id'],
                 Settings.ETAG_CACHE_PERIOD,
             ))
             return
 
-        logger.debug("[refresh %s]: ETag cache period expired, performing request..." % self.object_id)
-        result = NTBObject._get_document(self.identifier, self.object_id, self._etag)
+        logger.debug("[_refresh %s]: ETag cache period expired, performing request..." % self['_id'])
+        result = NTBObject._get_document(self.identifier, self['_id'], self._etag)
         if result is None:
             # Document is not modified, reset the etag check timeout
-            logger.debug("[refresh %s]: Document was not modified" % self.object_id)
+            logger.debug("[_refresh %s]: Document was not modified" % self['_id'])
             self._saved = datetime.now()
-            Settings.CACHE.set('turbasen.object.%s' % self.object_id, self, Settings.CACHE_GET_PERIOD)
+            Settings.CACHE.set('turbasen.object.%s' % self['_id'], self, Settings.CACHE_GET_PERIOD)
         else:
-            logger.debug("[refresh %s]: Document was modified, resetting fields..." % self.object_id)
+            logger.debug("[_refresh %s]: Document was modified, resetting fields..." % self['_id'])
             headers, document = result
-            self._set_data(etag=headers['etag'], fields=document)
+            self._set_fields(etag=headers['etag'], fields=document)
 
     #
     # Data push to Turbasen
     #
 
     @requires_not_partial
-    def save(self, include_extra=False):
-        if self.object_id:
-            headers, document = self._put(include_extra=include_extra)
+    def save(self):
+        if '_id' in self:
+            headers, document = self._put()
         else:
-            headers, document = self._post(include_extra=include_extra)
-            self.object_id = document.pop('_id')
+            headers, document = self._post()
 
         # Note that we're resetting all fields here. The main reason is to reset the etag and update metadata fields,
         # and although all other fields are reset, they should return as they were.
-        self._set_data(etag="\"%s\"" % document['checksum'], fields=document)
+        self._set_fields(etag="\"%s\"" % document['checksum'], fields=document)
 
     @requires_object_id
     def delete(self):
@@ -204,14 +177,14 @@ class NTBObject(object):
 
         events.trigger('api.delete_object')
         request = requests.delete(
-            '%s/%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self.object_id),
+            '%s/%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self['_id']),
             params=params,
         )
         if request.status_code in [400, 404]:
             raise DocumentNotFound(
                 "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (
                     self.identifier,
-                    self.object_id,
+                    self['_id'],
                 )
             )
         elif request.status_code in [401, 403]:
@@ -225,12 +198,12 @@ class NTBObject(object):
         if request.status_code != 204:
             logger.warning("Turbasen returned status code %s on DELETE; expected 204" % request.status_code)
 
-        Settings.CACHE.delete('turbasen.object.%s' % self.object_id)
-        self.object_id = None
+        Settings.CACHE.delete('turbasen.object.%s' % self['_id'])
+        del self['_id']
         return request.headers
 
     @requires_not_partial
-    def _post(self, include_extra=False):
+    def _post(self):
         params = {}
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
@@ -241,7 +214,7 @@ class NTBObject(object):
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
             # Note that we're not validating required fields, let the API handle that
-            data=json.dumps(self.get_data(include_extra=include_extra)),
+            data=json.dumps(self._fields),
         )
         if request.status_code in [400, 422]:
             raise InvalidDocument(
@@ -269,18 +242,18 @@ class NTBObject(object):
 
     @requires_object_id
     @requires_not_partial
-    def _put(self, include_extra=False):
+    def _put(self):
         params = {}
         if Settings.API_KEY is not None:
             params['api_key'] = Settings.API_KEY
 
         events.trigger('api.put_object')
         request = requests.put(
-            '%s/%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self.object_id),
+            '%s/%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self['_id']),
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
             # Note that we're not validating required fields, let the API handle that
-            data=json.dumps(self.get_data(include_extra=include_extra)),
+            data=json.dumps(self._fields),
         )
         if request.status_code in [400, 422]:
             raise InvalidDocument(
@@ -301,7 +274,7 @@ class NTBObject(object):
             raise DocumentNotFound(
                 "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (
                     self.identifier,
-                    self.object_id,
+                    self['_id'],
                 )
             )
 
@@ -324,7 +297,7 @@ class NTBObject(object):
         if object is None:
             logger.debug("[get %s/%s]: Not in local cache, performing GET request..." % (cls.identifier, object_id))
             headers, document = NTBObject._get_document(cls.identifier, object_id)
-            return cls(_meta={'id': document.pop('_id'), 'etag': headers['etag']}, **document)
+            return cls(_etag=headers['etag'], **document)
         else:
             logger.debug("[get %s/%s]: Retrieved cached object, refreshing..." % (cls.identifier, object_id))
             object._refresh()
@@ -442,8 +415,9 @@ class NTBObject(object):
             self.document_index += 1
             document = self.document_list[self.document_index - 1]
             return self.cls(
-                _meta={'id': document.pop('_id'), 'etag': "\"%s\"" % document['checksum'], 'is_partial': True},
-                **document
+                _etag="\"%s\"" % document['checksum'],
+                _is_partial=True,
+                **document,
             )
 
         def lookup_bulk(self):
