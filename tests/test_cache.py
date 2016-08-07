@@ -80,7 +80,8 @@ class TestClass(unittest.TestCase):
             self.assertEqual(cache.hits, 1)
             self.assertEqual(cache.misses, 2)
 
-            # Now fetch it again, and assert that this time it was retrieved from cache
+            # Now fetch it again as partial, and assert that this time it was retrieved from cache
+            partial_sted._is_partial = True
             partial_sted._fetch()
             self.assertEqual(cache.hits, 2)
             self.assertEqual(cache.misses, 2)
