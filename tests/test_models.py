@@ -131,15 +131,15 @@ class TestClass(unittest.TestCase):
         self.assertEqual(etag, self.objects.sted._etag)
 
     @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
-    def test_lookup(self):
-        results = turbasen.Sted.lookup(pages=2)
+    def test_list(self):
+        results = turbasen.Sted.list(pages=2)
         result_list = list(results)
         self.assertEqual(len(result_list), turbasen.settings.Settings.LIMIT * 2)
         self.assertNotEqual(result_list[0]['_id'], '')
 
     @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
-    def test_lookup_fields(self):
-        results = turbasen.Sted.lookup(pages=1, params={
+    def test_list_fields(self):
+        results = turbasen.Sted.list(pages=1, params={
             'fields': ['betjeningsgrad'],
             'tags': 'Hytte',
             'betjeningsgrad': 'Betjent',
@@ -151,8 +151,8 @@ class TestClass(unittest.TestCase):
         self.assertTrue(result._is_partial)
 
     @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
-    def test_lookup_single_field(self):
-        results = turbasen.Sted.lookup(pages=1, params={
+    def test_list_single_field(self):
+        results = turbasen.Sted.list(pages=1, params={
             'fields': 'betjeningsgrad', # Note that the string literal is not wrapped in a list
             'tags': 'Hytte',
             'betjeningsgrad': 'Betjent',

@@ -92,13 +92,13 @@ Usage
   turbasen.configure(LIMIT=3, ENDPOINT='https://dev.nasjonalturbase.no')
 
   # Lookup partial documents
-  turbasen.Sted.lookup(pages=1)
+  turbasen.Sted.list(pages=1)
   # [<Sted: 546b36a511f41a9c00c0d4d9 (partial): En liten hytte>,
   #  <Sted: 546a051011f41a9c00c0d4cc (partial): Snøhulen>,
   #  <Sted: 555f1f4206b9ce06003405c5 (partial): Strømfoss>]
 
   # Add filter parameters
-  turbasen.Sted.lookup(pages=1, params={'tags': 'Hytte'})
+  turbasen.Sted.list(pages=1, params={'tags': 'Hytte'})
   # [<Sted: 52407fb375049e561500027d (partial): Øvre Grue>,
   #  <Sted: 52407fb375049e561500035a (partial): Ravnastua fjellstue>,
   #  <Sted: 52407fb375049e5615000356 (partial): Lahpoluoppal>]
@@ -152,7 +152,7 @@ API
 Static methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: lookup(pages=None, params=dict())
+.. py:function:: list(pages=None, params=dict())
 
    Return an iterator yielding all objects of this class object type. Limit the
    number of objects to the number of ``pages`` wanted where each page contains
@@ -210,14 +210,14 @@ Exceptions
 Partial objects
 -----------------------------
 
-When using ``lookup``, not all document data is retrieved. The objects returned
+When using ``list``, not all document data is retrieved. The objects returned
 are classified as *partial*. On attribute lookup, if the attribute doesn't
 exist, a ``GET`` request is automatically performed under the hood to request
 the entire document, and if the attribute is found on the complete object, it is
 returned as normal.
 
-If you know you only need a few fields from a lookup, it may be a good idea to
-specify those in the params field like this:
+If you know you only need a few fields from a list call, it may be a good idea
+to specify those in the params field like this:
 ``params={'fields': ['field1', 'field2']}`` to avoid performing a ``GET``
 request for each of the objects in your list.
 

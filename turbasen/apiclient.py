@@ -272,7 +272,7 @@ class NTBObject(object):
     #
 
     @classmethod
-    def lookup(cls, pages=None, params=dict()):
+    def list(cls, pages=None, params=dict()):
         """
         Retrieve a complete list of these objects, partially fetched.
         Arguments:
@@ -301,14 +301,14 @@ class NTBObject(object):
 
         objects = Settings.CACHE.get(cache_key)
         if objects is None:
-            logger.debug("[lookup %s (pages=%s)]: Not cached, performing GET request(s)..." % (
+            logger.debug("[list %s (pages=%s)]: Not cached, performing GET request(s)..." % (
                 cls.identifier,
                 pages,
             ))
             objects = list(NTBObject.NTBIterator(cls, pages, params))
             Settings.CACHE.set(cache_key, objects, Settings.CACHE_LOOKUP_PERIOD)
         else:
-            logger.debug("[lookup %s (pages=%s)]: Retrieved from cache" % (cls.identifier, pages))
+            logger.debug("[list %s (pages=%s)]: Retrieved from cache" % (cls.identifier, pages))
         return objects
 
     class NTBIterator:
@@ -336,7 +336,7 @@ class NTBObject(object):
                 if self.exhausted:
                     raise StopIteration
                 else:
-                    self.lookup_bulk()
+                    self.list_bulk()
 
             self.document_index += 1
             document = self.document_list[self.document_index - 1]
@@ -346,7 +346,7 @@ class NTBObject(object):
                 **document,
             )
 
-        def lookup_bulk(self):
+        def list_bulk(self):
             params = self.params
 
             # API key
