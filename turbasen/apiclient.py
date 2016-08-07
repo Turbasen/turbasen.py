@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from json.decoder import JSONDecodeError
 import json
 import logging
 
@@ -184,26 +185,7 @@ class NTBObject(object):
             '%s/%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self['_id']),
             params=params,
         )
-        if request.status_code in [400, 404]:
-            raise DocumentNotFound(
-                "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (
-                    self.identifier,
-                    self['_id'],
-                )
-            )
-        elif request.status_code in [401, 403]:
-            raise Unauthorized(
-                "Turbasen returned status code %s with the message: \"%s\"" % (
-                    request.status_code,
-                    request.json()['message'],
-                )
-            )
-
-        if request.status_code != 204:
-            logger.warning(
-                "Turbasen returned status code %s on DELETE; expected 204" % request.status_code
-            )
-
+        NTBObject._handle_response(request, 'DELETE')
         Settings.CACHE.delete('turbasen.object.%s' % self['_id'])
         del self['_id']
         return request.headers
@@ -217,34 +199,9 @@ class NTBObject(object):
             '%s/%s' % (Settings.ENDPOINT_URL, self.identifier),
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
-            # Note that we're not validating required fields, let the API handle that
             data=json.dumps(self._fields),
         )
-        if request.status_code in [400, 422]:
-            raise InvalidDocument(
-                "Turbasen returned status code %s with the message: \"%s\" and the following "
-                "errors: \"%s\"" % (
-                    request.status_code,
-                    request.json()['message'],
-                    request.json().get('errors', ''),
-                )
-            )
-        elif request.status_code in [401, 403]:
-            raise Unauthorized(
-                "Turbasen returned status code %s with the message: \"%s\"" % (
-                    request.status_code,
-                    request.json()['message'],
-                )
-            )
-
-        if request.status_code != 201:
-            logger.warning(
-                "Turbasen returned status code %s on POST; expected 201" % request.status_code
-            )
-
-        for warning in request.json().get('warnings', []):
-            logger.warning("Turbasen POST warning: %s" % warning)
-
+        NTBObject._handle_response(request, 'POST')
         return request.headers, request.json()['document']
 
     def _put(self):
@@ -257,41 +214,9 @@ class NTBObject(object):
             '%s/%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self['_id']),
             headers={'Content-Type': 'application/json; charset=utf-8'},
             params=params,
-            # Note that we're not validating required fields, let the API handle that
             data=json.dumps(self._fields),
         )
-        if request.status_code in [400, 422]:
-            raise InvalidDocument(
-                "Turbasen returned status code %s with the message: \"%s\" and the following "
-                "errors: \"%s\"" % (
-                    request.status_code,
-                    request.json()['message'],
-                    request.json().get('errors', ''),
-                )
-            )
-        elif request.status_code in [401, 403]:
-            raise Unauthorized(
-                "Turbasen returned status code %s with the message: \"%s\"" % (
-                    request.status_code,
-                    request.json()['message'],
-                )
-            )
-        elif request.status_code == 404:
-            raise DocumentNotFound(
-                "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (
-                    self.identifier,
-                    self['_id'],
-                )
-            )
-
-        if request.status_code != 200:
-            logger.warning(
-                "Turbasen returned status code %s on PUT; expected 200" % request.status_code
-            )
-
-        for warning in request.json().get('warnings', []):
-            logger.warning("Turbasen PUT warning: %s" % warning)
-
+        NTBObject._handle_response(request, 'PUT')
         return request.headers, request.json()['document']
 
     #
@@ -336,29 +261,11 @@ class NTBObject(object):
             headers=headers,
             params=params,
         )
+        NTBObject._handle_response(request, 'GET')
         if request.status_code == 304 and etag is not None:
             return None
-        elif request.status_code in [400, 404]:
-            raise DocumentNotFound(
-                "Document with identifier '%s' and object id '%s' wasn't found in Turbasen" % (
-                    identifier,
-                    object_id,
-                )
-            )
-        elif request.status_code in [401, 403]:
-            raise Unauthorized(
-                "Turbasen returned status code %s with the message: \"%s\"" % (
-                    request.status_code,
-                    request.json()['message'],
-                )
-            )
-
-        if request.status_code != 200:
-            logger.warning(
-                "Turbasen returned status code %s on GET; expected 200" % request.status_code
-            )
-
-        return request.headers, request.json()
+        else:
+            return request.headers, request.json()
 
     #
     # List lookup
@@ -454,14 +361,7 @@ class NTBObject(object):
                 '%s/%s' % (Settings.ENDPOINT_URL, self.cls.identifier),
                 params=params,
             )
-            if request.status_code in [401, 403]:
-                raise Unauthorized(
-                    "Turbasen returned status code %s with the message: \"%s\"" % (
-                        request.status_code,
-                        request.json()['message'],
-                    )
-                )
-
+            NTBObject._handle_response(request, 'GET')
             response = request.json()
             self.document_list = response['documents']
             self.document_index = 0
@@ -473,3 +373,36 @@ class NTBObject(object):
             elif self.pages is not None and self.bulk_index >= self.pages * Settings.LIMIT:
                 # Specified page limit reached
                 self.exhausted = True
+
+    @staticmethod
+    def _handle_response(request, method):
+        try:
+            response = request.json()
+        except JSONDecodeError:
+            response = {}
+
+        for warning in response.get('warnings', []):
+            logger.warning("API warning: %s" % warning)
+
+        if request.status_code in [401, 403]:
+            raise Unauthorized("HTTP %s: %s" % (request.status_code, response))
+
+        elif request.status_code in [400, 404]:
+            raise DocumentNotFound("HTTP %s: %s" % (request.status_code, response))
+
+        elif request.status_code == 422:
+            raise InvalidDocument("HTTP %s: %s" % (request.status_code, response))
+
+        expected_response = {
+            'GET': 200,
+            'POST': 201,
+            'PUT': 200,
+            'DELETE': 204,
+        }
+
+        if method in expected_response and expected_response[method] != request.status_code:
+            logger.warning("HTTP %s: Expected status code %s; received %s" % (
+                method,
+                expected_response[method],
+                request.status_code,
+            ))
