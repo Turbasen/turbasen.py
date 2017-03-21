@@ -51,7 +51,7 @@ class TestClass(unittest.TestCase):
         cache.set('foo', 42, 3600)
         self.assertIsNone(cache.get('foo'))
 
-    @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
+    @unittest.skipIf(turbasen.settings.Settings.API_KEY == '', "API key not set")
     def test_cache_on_get(self):
         with self.configure_cache() as cache:
             # Save the object and assert that the cache has been set
@@ -65,7 +65,7 @@ class TestClass(unittest.TestCase):
             self.assertEqual(cache.hits, 2)
             self.assertEqual(cache.misses, 0)
 
-    @unittest.skipIf(turbasen.settings.Settings.API_KEY is None, "API key not set")
+    @unittest.skipIf(turbasen.settings.Settings.API_KEY == '', "API key not set")
     def test_cache_on_fetch(self):
         # Save the object on test before configuring the test cache
         self.sted.save()
