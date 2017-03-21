@@ -52,7 +52,6 @@ class TestClass(unittest.TestCase):
         turbasen.configure(ENDPOINT_URL='https://dev.nasjonalturbase.no')
         self.objects = ObjectsFixture()
 
-    @unittest.skipIf(turbasen.settings.Settings.API_KEY == '', "API key not set")
     def test_get_empty_object_id(self):
         with self.assertRaises(turbasen.exceptions.DocumentNotFound):
             turbasen.Sted.get('')
@@ -130,14 +129,12 @@ class TestClass(unittest.TestCase):
         self.objects.sted._refresh()
         self.assertEqual(etag, self.objects.sted._etag)
 
-    @unittest.skipIf(turbasen.settings.Settings.API_KEY == '', "API key not set")
     def test_list(self):
         results = turbasen.Sted.list(pages=2)
         result_list = list(results)
         self.assertEqual(len(result_list), turbasen.settings.Settings.LIMIT * 2)
         self.assertNotEqual(result_list[0]['_id'], '')
 
-    @unittest.skipIf(turbasen.settings.Settings.API_KEY == '', "API key not set")
     def test_list_fields(self):
         results = turbasen.Sted.list(pages=1, params={
             'fields': ['betjeningsgrad'],
@@ -150,7 +147,6 @@ class TestClass(unittest.TestCase):
         # Ensure that the previous assertion did *not* fetch the entire document
         self.assertTrue(result._is_partial)
 
-    @unittest.skipIf(turbasen.settings.Settings.API_KEY == '', "API key not set")
     def test_list_single_field(self):
         results = turbasen.Sted.list(pages=1, params={
             'fields': 'betjeningsgrad', # Note that the string literal is not wrapped in a list

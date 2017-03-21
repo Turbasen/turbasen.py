@@ -18,7 +18,6 @@ class TestClass(unittest.TestCase):
 
         self.assertEqual(len(mutable_list), 1)
 
-    @unittest.skipIf(turbasen.settings.Settings.API_KEY == '', "API key not set")
     def test_get_event(self):
         global mutable_list
         mutable_list = []
