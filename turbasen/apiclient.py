@@ -336,6 +336,10 @@ class NTBObject(UserDict):
             self.document_index = 0
             self.bulk_index += len(self.document_list)
 
+            # If the very first bulk has no documents, stop the iteration instantly
+            if not self.document_list:
+                raise StopIteration
+
             if self.bulk_index == response['total']:
                 # All documents retrieved
                 self.exhausted = True
