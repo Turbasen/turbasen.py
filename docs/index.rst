@@ -34,23 +34,23 @@ Datatypes
 
 .. py:class:: turbasen.Bilde
 
-  `Images <http://www.nasjonalturbase.no/data/bilder.html>`_
+  `Images <http://www.nasjonalturbase.no/data/bilder/>`_
 
 .. py:class:: turbasen.Gruppe
 
-  `Groups <http://www.nasjonalturbase.no/data/grupper.html>`_
+  `Groups <http://www.nasjonalturbase.no/data/grupper/>`_
 
 .. py:class:: turbasen.Område
 
-  `Areas <http://www.nasjonalturbase.no/data/omrader.html>`_
+  `Areas <http://www.nasjonalturbase.no/data/omrader/>`_
 
 .. py:class:: turbasen.Sted
 
-  `Places <http://www.nasjonalturbase.no/data/steder.html>`_
+  `Places <http://www.nasjonalturbase.no/data/steder/>`_
 
 .. py:class:: turbasen.Tur
 
-  `Trips <http://www.nasjonalturbase.no/data/turer.html>`_
+  `Trips <http://www.nasjonalturbase.no/data/turer/>`_
 
 Environment variables
 -----------------------------
