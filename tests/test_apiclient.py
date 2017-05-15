@@ -110,6 +110,30 @@ class TestClass(unittest.TestCase):
         self.assertEqual(navn_reversed, sted['navn'])
 
     @unittest.skipIf(turbasen.settings.Settings.API_KEY == '', "API key not set")
+    def test_patch(self):
+        self.objects.sted.save()
+
+        # Remove an existing field locally and make the object partial
+        beskrivelse = self.objects.sted['beskrivelse']
+        self.objects.sted._is_partial = True
+        del self.objects.sted['beskrivelse']
+
+        # Change some data
+        navn_original = self.objects.sted['navn']
+        navn_reversed = self.objects.sted['navn'][::-1]
+        self.assertEqual(navn_original, self.objects.sted['navn'])
+        self.assertNotEqual(navn_reversed, self.objects.sted['navn'])
+
+        # Patch the object
+        self.objects.sted['navn'] = navn_reversed
+        self.objects.sted.save()
+
+        # Now assert that navn is changed, beskrivelse is back and has the same value
+        self.assertEqual(beskrivelse, self.objects.sted['beskrivelse'])
+        self.assertEqual(navn_reversed, self.objects.sted['navn'])
+        self.assertNotEqual(navn_original, self.objects.sted['navn'])
+
+    @unittest.skipIf(turbasen.settings.Settings.API_KEY == '', "API key not set")
     def test_delete(self):
         # POST the object
         self.objects.sted.save()
