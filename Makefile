@@ -12,6 +12,10 @@ test:
 build:
 	docker-compose build dev
 
+.PHONY: docs
+docs:
+	docker-compose run --rm dev ash -c "cd docs && make html"
+
 .PHONY: publish
 publish:
 	python setup.py sdist bdist_egg upload --sign
