@@ -184,7 +184,8 @@ Instance methods
 .. py:function:: save()
 
   Save this document. If the document doesn't have an ``_id`` field, it will be
-  assigned.
+  assigned. Saving a :ref:`partial document <partial-documents>` will perform
+  a ``PATCH`` request, only overwriting fields that are defined locally.
 
 .. py:function:: delete()
 
