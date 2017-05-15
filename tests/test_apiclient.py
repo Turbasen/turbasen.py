@@ -131,14 +131,12 @@ class TestClass(unittest.TestCase):
 
     def test_list(self):
         results = turbasen.Sted.list(pages=2)
-        result_list = list(results)
-        self.assertEqual(len(result_list), turbasen.settings.Settings.LIMIT * 2)
-        self.assertNotEqual(result_list[0]['_id'], '')
+        self.assertEqual(len(results), turbasen.settings.Settings.LIMIT * 2)
+        self.assertNotEqual(results[0]['_id'], '')
 
     def test_list_empty(self):
         results = turbasen.Sted.list(params={'foo': 404})
-        result_list = list(results)
-        self.assertEqual(len(result_list), 0)
+        self.assertEqual(len(results), 0)
 
     def test_list_fields(self):
         results = turbasen.Sted.list(pages=1, params={
