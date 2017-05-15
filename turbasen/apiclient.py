@@ -127,12 +127,16 @@ class NTBObject(UserDict):
             self._set_fields(etag=headers['etag'], fields=document)
 
     def save(self):
-        assert not self._is_partial
-
-        if '_id' in self:
+        if '_id' not in self:
+            # Create new object
+            headers, document = self._post()
+        elif not self._is_partial:
+            # Not partial, PUT entire document
             headers, document = self._put()
         else:
-            headers, document = self._post()
+            # Partial object - PATCH the fields that were changed
+            headers, document = self._patch()
+            self._is_partial = False
 
         # Note that we're resetting all fields here. The main reason is to reset the etag and update
         # metadata fields, and although all other fields are reset, they should return as they were.
@@ -179,6 +183,20 @@ class NTBObject(UserDict):
             data=json.dumps(self.data),
         )
         NTBObject._handle_response(request, 'PUT')
+        return request.headers, request.json()['document']
+
+    def _patch(self):
+        assert '_id' in self
+
+        params = {'api_key': Settings.API_KEY}
+        events.trigger('api.patch_object')
+        request = requests.patch(
+            '%s/%s/%s' % (Settings.ENDPOINT_URL, self.identifier, self['_id']),
+            headers={'Content-Type': 'application/json; charset=utf-8'},
+            params=params,
+            data=json.dumps(self.data),
+        )
+        NTBObject._handle_response(request, 'PATCH')
         return request.headers, request.json()['document']
 
     #
@@ -375,6 +393,7 @@ class NTBObject(UserDict):
             'GET': 200,
             'POST': 201,
             'PUT': 200,
+            'PATCH': 200,
             'DELETE': 204,
         }
 
