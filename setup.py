@@ -1,7 +1,7 @@
 from setuptools import setup
 
 name = 'turbasen'
-VERSION = '3.1.0'
+VERSION = '3.2.0'
 
 setup(
     name=name,
@@ -10,7 +10,7 @@ setup(
     description='Client for Nasjonal Turbase REST API',
     long_description='Documentation: https://turbasenpy.readthedocs.io/',
     author='Ali Kaafarani',
-    author_email='ali.kaafarani@dnt.no',
+    author_email='tekno@dnt.no',
     url='https://github.com/Turbasen/turbasen.py',
     download_url='https://github.com/Turbasen/turbasen.py/tarball/v%s' % (VERSION),
     keywords=['turbasen', 'nasjonalturbase', 'turistforening', 'rest-api'],
