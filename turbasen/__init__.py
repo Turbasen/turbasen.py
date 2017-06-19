@@ -2,6 +2,7 @@
 from .datatypes import ( # noqa
     Bilde,
     Gruppe,
+    Liste,
     Område,
     Sted,
     Tur,

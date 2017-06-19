@@ -6,6 +6,9 @@ class Bilde(NTBObject):
 class Gruppe(NTBObject):
     identifier = 'grupper'
 
+class Liste(NTBObject):
+    identifier = 'lister'
+
 class Område(NTBObject):
     identifier = 'områder'
 
