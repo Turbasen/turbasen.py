@@ -40,6 +40,10 @@ Datatypes
 
   `Groups <http://www.nasjonalturbase.no/data/grupper/>`_
 
+.. py:class:: turbasen.Liste
+
+  `Lister <http://www.nasjonalturbase.no/data/lister/>`_
+
 .. py:class:: turbasen.Område
 
   `Areas <http://www.nasjonalturbase.no/data/omrader/>`_
