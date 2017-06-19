@@ -21,6 +21,13 @@ class ObjectsFixture:
             navngiving='Testdata',
         )
 
+        self.liste = turbasen.Liste(
+            lisens='Privat',
+            status='Kladd',
+            navn='Testliste',
+            navngiving='Testdata',
+        )
+
         self.omrade = turbasen.Område(
             lisens='Privat',
             status='Kladd',
@@ -64,6 +71,7 @@ class TestClass(unittest.TestCase):
         self.assertNotIn('_id', self.objects.gruppe)
         self.assertNotIn('_id', self.objects.omrade)
         self.assertNotIn('_id', self.objects.tur)
+        self.assertNotIn('_id', self.objects.liste)
 
         # POST our fixture objects
         self.objects.bilde.save()
@@ -71,12 +79,14 @@ class TestClass(unittest.TestCase):
         self.objects.gruppe.save()
         self.objects.omrade.save()
         self.objects.tur.save()
+        self.objects.liste.save()
 
         self.assertIn('_id', self.objects.bilde)
         self.assertIn('_id', self.objects.sted)
         self.assertIn('_id', self.objects.gruppe)
         self.assertIn('_id', self.objects.omrade)
         self.assertIn('_id', self.objects.tur)
+        self.assertIn('_id', self.objects.liste)
 
         # GET the data back
         bilde = turbasen.Bilde.get(self.objects.bilde['_id'])
@@ -84,12 +94,14 @@ class TestClass(unittest.TestCase):
         gruppe = turbasen.Gruppe.get(self.objects.gruppe['_id'])
         omrade = turbasen.Område.get(self.objects.omrade['_id'])
         tur = turbasen.Tur.get(self.objects.tur['_id'])
+        liste = turbasen.Liste.get(self.objects.liste['_id'])
 
         self.assertEqual(bilde['navn'], self.objects.bilde['navn'])
         self.assertEqual(sted['navn'], self.objects.sted['navn'])
         self.assertEqual(gruppe['navn'], self.objects.gruppe['navn'])
         self.assertEqual(omrade['navn'], self.objects.omrade['navn'])
         self.assertEqual(tur['navn'], self.objects.tur['navn'])
+        self.assertEqual(liste['navn'], self.objects.liste['navn'])
 
     @unittest.skipIf(turbasen.settings.Settings.API_KEY == '', "API key not set")
     def test_put(self):
