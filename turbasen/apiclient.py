@@ -371,7 +371,7 @@ class NTBObject(UserDict):
         according to the HTTP status code"""
         try:
             response = request.json()
-        except JSONDecodeError:
+        except (JSONDecodeError, ValueError):
             response = {}
 
         for warning in response.get('warnings', []):
